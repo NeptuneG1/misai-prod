@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scoreboard Input</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #222;
+      color: #eee;
+      padding: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>OBS Scoreboard Control Panel</h2>
+
+  <label>Team Left Name: <input id="teamLeft" /></label>
+  <label>Team Right Name: <input id="teamRight" /></label>
+  <label>Team Left Score: <input type="number" id="scoreLeft" /></label>
+  <label>Team Right Score: <input type="number" id="scoreRight" /></label>
+  <label>Match Info: <input id="matchInfo" /></label>
+  
+  <button onclick="updateScoreboard()">Update Scoreboard</button>
+
+  <script>
+    function updateScoreboard() {
+      localStorage.setItem('scoreboardData', JSON.stringify({
+        teamLeft: document.getElementById('teamLeft').value,
+        teamRight: document.getElementById('teamRight').value,
+        scoreLeft: document.getElementById('scoreLeft').value,
+        scoreRight: document.getElementById('scoreRight').value,
+        matchInfo: document.getElementById('matchInfo').value
+      }));
+    }
+  </script>
+</body>
+</html>

@@ -48,7 +48,7 @@
         .from('scoreboard-assets')
         .upload(filename, file, { upsert: true });
       if (error) {
-        console.error('Upload failed:', error.message);
+        alert("Upload failed: " + error.message);
         return null;
       }
       const { data } = supabase.storage.from('scoreboard-assets').getPublicUrl(filename);
@@ -96,10 +96,7 @@
         .eq('id', 1)
         .single();
 
-      if (error) {
-        console.error('Failed to fetch logo URLs', error);
-        return;
-      }
+      if (error) return;
 
       await supabase.from('scoreboard').update({
         team_left: teamRight,

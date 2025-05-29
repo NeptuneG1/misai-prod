@@ -22,39 +22,35 @@
   </style>
 </head>
 <body>
-  <h2>OBS Scoreboard Control Panel</h2>
+  <h2>Scoreboard Controller</h2>
 
   <label>Team Left Name: <input id="teamLeft" /></label>
   <label>Team Right Name: <input id="teamRight" /></label>
   <label>Team Left Score: <input type="number" id="scoreLeft" /></label>
   <label>Team Right Score: <input type="number" id="scoreRight" /></label>
-  <label>Match Info: <input id="matchInfo" /></label>
+  <label>Overlay Image: <input type="file" id="overlayFile" accept="image/*" /></label>
 
-  <label>Left Logo: <input type="file" id="logoLeft" /></label>
-  <label>Right Logo: <input type="file" id="logoRight" /></label>
-
-  <button onclick="updateScoreboard()">Update Scoreboard</button>
+  <button onclick="updateScoreboard()">Update</button>
 
   <script>
     const supabase = supabase.createClient('SUPABASE_URL', 'SUPABASE_KEY');
 
-    async function uploadImage(file, path) {
+    async function uploadOverlayImage(file) {
       if (!file) return null;
-      const { data, error } = await supabase.storage.from('scoreboard-assets').upload(path, file, { upsert: true });
+      const { data, error } = await supabase.storage
+        .from('scoreboard-assets')
+        .upload('overlay.png', file, { upsert: true });
       if (error) {
-        console.error('Upload error:', error.message);
+        console.error('Upload failed:', error);
         return null;
       }
-      const { data: urlData } = supabase.storage.from('scoreboard-assets').getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from('scoreboard-assets').getPublicUrl('overlay.png');
       return urlData.publicUrl;
     }
 
     async function updateScoreboard() {
-      const logoLeft = document.getElementById('logoLeft').files[0];
-      const logoRight = document.getElementById('logoRight').files[0];
-
-      const logoLeftUrl = await uploadImage(logoLeft, 'logo-left.png');
-      const logoRightUrl = await uploadImage(logoRight, 'logo-right.png');
+      const overlayFile = document.getElementById('overlayFile').files[0];
+      const overlayUrl = overlayFile ? await uploadOverlayImage(overlayFile) : null;
 
       const { error } = await supabase.from('scoreboard').upsert({
         id: 1,
@@ -62,11 +58,8 @@
         team_right: document.getElementById('teamRight').value,
         score_left: parseInt(document.getElementById('scoreLeft').value),
         score_right: parseInt(document.getElementById('scoreRight').value),
-        match_info: document.getElementById('matchInfo').value,
-        logo_left_url: logoLeftUrl,
-        logo_right_url: logoRightUrl
+        overlay_url: overlayUrl
       });
-
       if (error) console.error('Error updating:', error);
     }
   </script>

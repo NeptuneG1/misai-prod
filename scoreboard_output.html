@@ -5,6 +5,15 @@
   <title>OBS Scoreboard Overlay</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
+    :root {
+      --font-family: 'Segoe UI', sans-serif;
+      --font-color: #ffffff;
+      --font-size-name: 28px;
+      --font-size-score: 48px;
+      --logo-bg-left: #1e88e5;   /* Example team color left */
+      --logo-bg-right: #e53935;  /* Example team color right */
+    }
+
     html, body {
       margin: 0;
       padding: 0;
@@ -14,8 +23,9 @@
 
     #overlayContainer {
       position: absolute;
-      top: 100px;
-      left: 100px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       width: 800px;
       resize: both;
       overflow: hidden;
@@ -30,9 +40,9 @@
 
     .text-overlay {
       position: absolute;
-      font-family: Arial, sans-serif;
+      font-family: var(--font-family);
       font-weight: bold;
-      color: white;
+      color: var(--font-color);
       text-shadow: 2px 2px 5px black;
       pointer-events: none;
     }
@@ -40,43 +50,47 @@
     #teamLeftName {
       top: 25px;
       left: 40px;
-      font-size: 28px;
+      font-size: var(--font-size-name);
     }
 
     #teamRightName {
       top: 25px;
       right: 40px;
-      font-size: 28px;
+      font-size: var(--font-size-name);
     }
 
     #scoreLeft {
       top: 60px;
       left: 80px;
-      font-size: 48px;
+      font-size: var(--font-size-score);
     }
 
     #scoreRight {
       top: 60px;
       right: 80px;
-      font-size: 48px;
+      font-size: var(--font-size-score);
     }
 
     .team-logo {
       position: absolute;
       width: 80px;
       height: 80px;
-      object-fit: contain;
+      border-radius: 50%;
+      object-fit: cover;
       pointer-events: none;
+      background-color: var(--logo-bg-left);
     }
 
     #logoLeft {
       top: 90px;
       left: 20px;
+      background-color: var(--logo-bg-left);
     }
 
     #logoRight {
       top: 90px;
       right: 20px;
+      background-color: var(--logo-bg-right);
     }
   </style>
 </head>
@@ -136,6 +150,7 @@
       if (isDragging) {
         container.style.left = `${e.clientX - offsetX}px`;
         container.style.top = `${e.clientY - offsetY}px`;
+        container.style.transform = ''; // remove center anchor if dragged
       }
     });
 

@@ -66,6 +66,7 @@
       width: 80px;
       height: 80px;
       object-fit: contain;
+      pointer-events: none;
     }
 
     #logoLeft {
@@ -91,39 +92,41 @@
   </div>
 
   <script>
-    const supabase = supabase.createClient(
+    const client = supabase.createClient(
       'https://gkugecflfddkpitlrmws.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWdlY2ZsZmRka3BpdGxybXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwODMwNzQsImV4cCI6MjA2MTY1OTA3NH0.OgQOx9k71DDdK1yOa7VNKGSgoFD9kNGo8j-bR91zGKE'
     );
 
     async function fetchScoreboard() {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from('scoreboard')
         .select('*')
         .eq('id', 1)
         .single();
 
-      if (error) return;
+      if (error) {
+        console.error('Failed to load scoreboard:', error);
+        return;
+      }
 
-      const timestamp = Date.now(); // prevent image caching
+      const timestamp = Date.now();
       document.getElementById('teamLeftName').textContent = data.team_left || '';
       document.getElementById('teamRightName').textContent = data.team_right || '';
       document.getElementById('scoreLeft').textContent = data.score_left ?? '0';
       document.getElementById('scoreRight').textContent = data.score_right ?? '0';
-      document.getElementById('overlayImage').src = `${data.overlay_url}?t=${timestamp}`;
-      document.getElementById('logoLeft').src = `${data.logo_left_url}?t=${timestamp}`;
-      document.getElementById('logoRight').src = `${data.logo_right_url}?t=${timestamp}`;
+      document.getElementById('overlayImage').src = data.overlay_url ? `${data.overlay_url}?t=${timestamp}` : '';
+      document.getElementById('logoLeft').src = data.logo_left_url ? `${data.logo_left_url}?t=${timestamp}` : '';
+      document.getElementById('logoRight').src = data.logo_right_url ? `${data.logo_right_url}?t=${timestamp}` : '';
     }
 
     fetchScoreboard();
-    setInterval(fetchScoreboard, 1000); // auto-refresh
+    setInterval(fetchScoreboard, 1000);
 
     // Dragging
     const container = document.getElementById('overlayContainer');
     let isDragging = false, offsetX = 0, offsetY = 0;
 
     container.addEventListener('mousedown', e => {
-      if (e.target.tagName !== 'IMG') return;
       isDragging = true;
       offsetX = e.clientX - container.offsetLeft;
       offsetY = e.clientY - container.offsetTop;

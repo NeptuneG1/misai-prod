@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Scoreboard Overlay</title>
+  <title>OBS Scoreboard Overlay</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     html, body {
@@ -11,81 +11,121 @@
       background: transparent;
       overflow: hidden;
     }
+
     #overlayContainer {
       position: absolute;
       top: 100px;
       left: 100px;
       width: 800px;
-      height: auto;
-      cursor: move;
       resize: both;
       overflow: hidden;
+      cursor: move;
+      border: 2px dashed transparent;
     }
-    #overlayContainer img {
+
+    #overlayImage {
       width: 100%;
       height: auto;
       display: block;
     }
+
     .text-overlay {
       position: absolute;
-      color: white;
       font-family: Arial, sans-serif;
       font-weight: bold;
-      text-align: center;
+      color: white;
+      text-shadow: 2px 2px 5px black;
       pointer-events: none;
     }
+
     #teamLeftName {
-      top: 50px;
-      left: 150px;
+      top: 25px;
+      left: 40px;
+      font-size: 28px;
     }
+
     #teamRightName {
-      top: 50px;
-      right: 150px;
+      top: 25px;
+      right: 40px;
+      font-size: 28px;
     }
+
     #scoreLeft {
       top: 60px;
-      left: 70px;
+      left: 80px;
+      font-size: 48px;
     }
+
     #scoreRight {
       top: 60px;
-      right: 70px;
+      right: 80px;
+      font-size: 48px;
+    }
+
+    .team-logo {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+    }
+
+    #logoLeft {
+      top: 90px;
+      left: 20px;
+    }
+
+    #logoRight {
+      top: 90px;
+      right: 20px;
     }
   </style>
 </head>
 <body>
   <div id="overlayContainer">
-    <img id="overlayImg" src="" alt="Overlay">
-    <div class="text-overlay" id="teamLeftName" style="font-size: 28px;"></div>
-    <div class="text-overlay" id="teamRightName" style="font-size: 28px;"></div>
-    <div class="text-overlay" id="scoreLeft" style="font-size: 48px;"></div>
-    <div class="text-overlay" id="scoreRight" style="font-size: 48px;"></div>
+    <img id="overlayImage" src="" alt="Overlay" />
+
+    <img id="logoLeft" class="team-logo" />
+    <img id="logoRight" class="team-logo" />
+
+    <div id="teamLeftName" class="text-overlay"></div>
+    <div id="teamRightName" class="text-overlay"></div>
+    <div id="scoreLeft" class="text-overlay"></div>
+    <div id="scoreRight" class="text-overlay"></div>
   </div>
 
   <script>
-    const supabase = supabase.createClient('SUPABASE_URL', 'SUPABASE_KEY');
+    const supabase = supabase.createClient(
+      'https://gkugecflfddkpitlrmws.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWdlY2ZsZmRka3BpdGxybXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwODMwNzQsImV4cCI6MjA2MTY1OTA3NH0.OgQOx9k71DDdK1yOa7VNKGSgoFD9kNGo8j-bR91zGKE'
+    );
 
-    async function fetchData() {
+    async function fetchScoreboard() {
       const { data, error } = await supabase
         .from('scoreboard')
         .select('*')
         .eq('id', 1)
         .single();
-      if (error) return;
+
+      if (error) {
+        console.error('Failed to load scoreboard:', error);
+        return;
+      }
 
       document.getElementById('teamLeftName').textContent = data.team_left || '';
       document.getElementById('teamRightName').textContent = data.team_right || '';
       document.getElementById('scoreLeft').textContent = data.score_left ?? '0';
       document.getElementById('scoreRight').textContent = data.score_right ?? '0';
-      document.getElementById('overlayImg').src = data.overlay_url || '';
+      document.getElementById('logoLeft').src = data.logo_left_url || '';
+      document.getElementById('logoRight').src = data.logo_right_url || '';
+      document.getElementById('overlayImage').src = data.overlay_url || '';
     }
 
-    fetchData();
-    setInterval(fetchData, 1000);
+    fetchScoreboard();
+    setInterval(fetchScoreboard, 1000); // live updates
 
-    // Draggable and resizable
+    // Draggable support
     const container = document.getElementById('overlayContainer');
-    let isDragging = false;
-    let offsetX, offsetY;
+    let isDragging = false, offsetX = 0, offsetY = 0;
 
     container.addEventListener('mousedown', e => {
       if (e.target.tagName !== 'IMG') return;

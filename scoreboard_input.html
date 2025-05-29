@@ -44,15 +44,22 @@
 
     async function uploadFile(file, filename) {
       if (!file) return null;
+
       const { error } = await supabase.storage
         .from('scoreboard-assets')
         .upload(filename, file, { upsert: true });
+
       if (error) {
         alert("Upload failed: " + error.message);
+        console.error(error);
         return null;
       }
-      const { data } = supabase.storage.from('scoreboard-assets').getPublicUrl(filename);
-      return data.publicUrl;
+
+      const { data: urlData } = supabase.storage
+        .from('scoreboard-assets')
+        .getPublicUrl(filename);
+
+      return urlData?.publicUrl || null;
     }
 
     async function updateScoreboard() {
@@ -68,15 +75,21 @@
         id: 1,
         team_left: document.getElementById('teamLeft').value,
         team_right: document.getElementById('teamRight').value,
-        score_left: parseInt(document.getElementById('scoreLeft').value),
-        score_right: parseInt(document.getElementById('scoreRight').value)
+        score_left: parseInt(document.getElementById('scoreLeft').value) || 0,
+        score_right: parseInt(document.getElementById('scoreRight').value) || 0
       };
+
       if (overlayUrl) payload.overlay_url = overlayUrl;
       if (logoLeftUrl) payload.logo_left_url = logoLeftUrl;
       if (logoRightUrl) payload.logo_right_url = logoRightUrl;
 
       const { error } = await supabase.from('scoreboard').upsert(payload);
-      if (error) console.error('Error updating:', error);
+      if (error) {
+        console.error('Update error:', error);
+        alert('Failed to update scoreboard.');
+      } else {
+        alert('Scoreboard updated!');
+      }
     }
 
     async function swapSides() {
@@ -96,7 +109,10 @@
         .eq('id', 1)
         .single();
 
-      if (error) return;
+      if (error) {
+        console.error('Swap fetch error:', error);
+        return;
+      }
 
       await supabase.from('scoreboard').update({
         team_left: teamRight,
@@ -110,3 +126,4 @@
   </script>
 </body>
 </html>
+

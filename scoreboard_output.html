@@ -2,113 +2,106 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>OBS Scoreboard Overlay</title>
+  <title>Scoreboard Overlay</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       background: transparent;
-      font-family: Arial, sans-serif;
-    }
-
-    .container {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: start;
-      padding-top: 30px;
-    }
-
-    .scoreboard {
-      display: flex;
-      background: #f1b300;
-      border-radius: 6px;
       overflow: hidden;
-      align-items: center;
     }
-
-    .score-box {
-      background: #f1b300;
-      color: #000;
+    #overlayContainer {
+      position: absolute;
+      top: 100px;
+      left: 100px;
+      width: 800px;
+      height: auto;
+      cursor: move;
+      resize: both;
+      overflow: hidden;
+    }
+    #overlayContainer img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .text-overlay {
+      position: absolute;
+      color: white;
+      font-family: Arial, sans-serif;
       font-weight: bold;
-      font-size: 50px;
-      width: 80px;
       text-align: center;
+      pointer-events: none;
     }
-
-    .team-box {
-      background: #000;
-      padding: 10px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    #teamLeftName {
+      top: 50px;
+      left: 150px;
     }
-
-    .team-logo {
-      width: 80px;
-      height: 80px;
-      object-fit: contain;
+    #teamRightName {
+      top: 50px;
+      right: 150px;
     }
-
-    .team-tag {
-      background: #aaa;
-      color: #000;
-      font-size: 16px;
-      font-weight: bold;
-      padding: 2px 10px;
-      margin-top: 5px;
+    #scoreLeft {
+      top: 60px;
+      left: 70px;
     }
-
-    .versus {
-      background: #f1b300;
-      color: #000;
-      font-weight: bold;
-      padding: 0 40px;
-      font-size: 24px;
+    #scoreRight {
+      top: 60px;
+      right: 70px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="scoreboard">
-      <div class="score-box" id="scoreLeft">0</div>
-      <div class="team-box">
-        <img class="team-logo" id="logoLeft" src="" />
-        <div class="team-tag" id="teamLeft">STE</div>
-      </div>
-      <div class="versus">VERSUS</div>
-      <div class="team-box">
-        <img class="team-logo" id="logoRight" src="" />
-        <div class="team-tag" id="teamRight">ELV</div>
-      </div>
-      <div class="score-box" id="scoreRight">0</div>
-    </div>
+  <div id="overlayContainer">
+    <img id="overlayImg" src="" alt="Overlay">
+    <div class="text-overlay" id="teamLeftName" style="font-size: 28px;"></div>
+    <div class="text-overlay" id="teamRightName" style="font-size: 28px;"></div>
+    <div class="text-overlay" id="scoreLeft" style="font-size: 48px;"></div>
+    <div class="text-overlay" id="scoreRight" style="font-size: 48px;"></div>
   </div>
 
   <script>
     const supabase = supabase.createClient('SUPABASE_URL', 'SUPABASE_KEY');
 
-    async function fetchScoreboard() {
+    async function fetchData() {
       const { data, error } = await supabase
         .from('scoreboard')
         .select('*')
         .eq('id', 1)
         .single();
-
       if (error) return;
 
-      document.getElementById('teamLeft').textContent = data.team_left || 'STE';
-      document.getElementById('teamRight').textContent = data.team_right || 'ELV';
+      document.getElementById('teamLeftName').textContent = data.team_left || '';
+      document.getElementById('teamRightName').textContent = data.team_right || '';
       document.getElementById('scoreLeft').textContent = data.score_left ?? '0';
       document.getElementById('scoreRight').textContent = data.score_right ?? '0';
-      document.getElementById('logoLeft').src = data.logo_left_url || '';
-      document.getElementById('logoRight').src = data.logo_right_url || '';
+      document.getElementById('overlayImg').src = data.overlay_url || '';
     }
 
-    fetchScoreboard();
-    setInterval(fetchScoreboard, 1000);
+    fetchData();
+    setInterval(fetchData, 1000);
+
+    // Draggable and resizable
+    const container = document.getElementById('overlayContainer');
+    let isDragging = false;
+    let offsetX, offsetY;
+
+    container.addEventListener('mousedown', e => {
+      if (e.target.tagName !== 'IMG') return;
+      isDragging = true;
+      offsetX = e.clientX - container.offsetLeft;
+      offsetY = e.clientY - container.offsetTop;
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (isDragging) {
+        container.style.left = `${e.clientX - offsetX}px`;
+        container.style.top = `${e.clientY - offsetY}px`;
+      }
+    });
+
+    window.addEventListener('mouseup', () => isDragging = false);
   </script>
 </body>
 </html>

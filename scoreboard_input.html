@@ -149,7 +149,11 @@
         .eq('id', 1)
         .single();
 
-      if (error || !data) return;
+      if (error || !data) {
+        console.error('Failed to load scoreboard:', error);
+        alert("Error loading scoreboard.");
+        return;
+      }
 
       document.getElementById('teamLeft').value = data.team_left || '';
       document.getElementById('teamRight').value = data.team_right || '';
@@ -163,7 +167,7 @@
       document.getElementById('logoRightPreview').src = data.logo_right_url || '';
     }
 
-    loadScoreboard();
+    document.addEventListener('DOMContentLoaded', loadScoreboard);
   </script>
 </body>
 </html>

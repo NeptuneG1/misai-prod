@@ -5,15 +5,6 @@
   <title>OBS Scoreboard Overlay</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    :root {
-      --font-family: 'Segoe UI', sans-serif;
-      --font-color: #ffffff;
-      --font-size-name: 28px;
-      --font-size-score: 48px;
-      --logo-bg-left: #1e88e5;   /* Example team color left */
-      --logo-bg-right: #e53935;  /* Example team color right */
-    }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -23,138 +14,139 @@
 
     #overlayContainer {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 100px;
+      left: 100px;
       width: 800px;
       resize: both;
       overflow: hidden;
-      cursor: move;
     }
 
-    #overlayImage {
+    .scoreboard-bg {
+      position: relative;
+      width: 100%;
+      height: auto;
+    }
+
+    .team-section {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px black;
+    }
+
+    .left { left: 0; flex-direction: row; }
+    .right { right: 0; flex-direction: row-reverse; }
+
+    .team-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      border-radius: 50%;
+      background: #444;
+      margin: 0 10px;
+    }
+
+    .team-name {
+      font-size: 28px;
+    }
+
+    .score {
+      font-size: 48px;
+      margin: 0 15px;
+    }
+
+    .overlay-image {
       width: 100%;
       height: auto;
       display: block;
     }
 
-    .text-overlay {
-      position: absolute;
-      font-family: var(--font-family);
-      font-weight: bold;
-      color: var(--font-color);
-      text-shadow: 2px 2px 5px black;
-      pointer-events: none;
-    }
-
-    #teamLeftName {
-      top: 25px;
-      left: 40px;
-      font-size: var(--font-size-name);
-    }
-
-    #teamRightName {
-      top: 25px;
-      right: 40px;
-      font-size: var(--font-size-name);
-    }
-
-    #scoreLeft {
-      top: 60px;
-      left: 80px;
-      font-size: var(--font-size-score);
-    }
-
-    #scoreRight {
-      top: 60px;
-      right: 80px;
-      font-size: var(--font-size-score);
-    }
-
-    .team-logo {
-      position: absolute;
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      pointer-events: none;
-      background-color: var(--logo-bg-left);
-    }
-
-    #logoLeft {
-      top: 90px;
-      left: 20px;
-      background-color: var(--logo-bg-left);
-    }
-
-    #logoRight {
-      top: 90px;
-      right: 20px;
-      background-color: var(--logo-bg-right);
+    #alignToggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid #ccc;
+      color: white;
+      padding: 5px 10px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
+  <div id="alignToggle" onclick="toggleAlignment()">Anchor: Center</div>
+
   <div id="overlayContainer">
-    <img id="overlayImage" src="" alt="Overlay" />
-    <img id="logoLeft" class="team-logo" />
-    <img id="logoRight" class="team-logo" />
-    <div id="teamLeftName" class="text-overlay"></div>
-    <div id="teamRightName" class="text-overlay"></div>
-    <div id="scoreLeft" class="text-overlay"></div>
-    <div id="scoreRight" class="text-overlay"></div>
+    <div class="scoreboard-bg">
+      <img id="overlayImage" class="overlay-image" src="" />
+      <div class="team-section left" id="leftSection">
+        <img id="logoLeft" class="team-logo" />
+        <div class="team-name" id="teamLeftName"></div>
+        <div class="score" id="scoreLeft"></div>
+      </div>
+      <div class="team-section right" id="rightSection">
+        <img id="logoRight" class="team-logo" />
+        <div class="team-name" id="teamRightName"></div>
+        <div class="score" id="scoreRight"></div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const client = supabase.createClient(
+    const supabase = supabase.createClient(
       'https://gkugecflfddkpitlrmws.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWdlY2ZsZmRka3BpdGxybXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwODMwNzQsImV4cCI6MjA2MTY1OTA3NH0.OgQOx9k71DDdK1yOa7VNKGSgoFD9kNGo8j-bR91zGKE'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
     );
 
     async function fetchScoreboard() {
-      const { data, error } = await client
+      const { data, error } = await supabase
         .from('scoreboard')
         .select('*')
         .eq('id', 1)
         .single();
 
-      if (error) {
-        console.error('Failed to load scoreboard:', error);
-        return;
-      }
+      if (error) return;
 
-      const timestamp = Date.now();
+      const t = Date.now();
       document.getElementById('teamLeftName').textContent = data.team_left || '';
       document.getElementById('teamRightName').textContent = data.team_right || '';
       document.getElementById('scoreLeft').textContent = data.score_left ?? '0';
       document.getElementById('scoreRight').textContent = data.score_right ?? '0';
-      document.getElementById('overlayImage').src = data.overlay_url ? `${data.overlay_url}?t=${timestamp}` : '';
-      document.getElementById('logoLeft').src = data.logo_left_url ? `${data.logo_left_url}?t=${timestamp}` : '';
-      document.getElementById('logoRight').src = data.logo_right_url ? `${data.logo_right_url}?t=${timestamp}` : '';
+      document.getElementById('overlayImage').src = data.overlay_url ? `${data.overlay_url}?t=${t}` : '';
+      document.getElementById('logoLeft').src = data.logo_left_url ? `${data.logo_left_url}?t=${t}` : '';
+      document.getElementById('logoRight').src = data.logo_right_url ? `${data.logo_right_url}?t=${t}` : '';
+      document.getElementById('leftSection').style.backgroundColor = data.color_left || 'transparent';
+      document.getElementById('rightSection').style.backgroundColor = data.color_right || 'transparent';
     }
 
     fetchScoreboard();
     setInterval(fetchScoreboard, 1000);
 
-    // Dragging
-    const container = document.getElementById('overlayContainer');
-    let isDragging = false, offsetX = 0, offsetY = 0;
-
-    container.addEventListener('mousedown', e => {
-      isDragging = true;
-      offsetX = e.clientX - container.offsetLeft;
-      offsetY = e.clientY - container.offsetTop;
-    });
-
-    window.addEventListener('mousemove', e => {
-      if (isDragging) {
-        container.style.left = `${e.clientX - offsetX}px`;
-        container.style.top = `${e.clientY - offsetY}px`;
-        container.style.transform = ''; // remove center anchor if dragged
+    // Alignment toggle
+    let centered = true;
+    function toggleAlignment() {
+      const container = document.getElementById('overlayContainer');
+      if (centered) {
+        container.style.top = '20px';
+        container.style.left = '20px';
+        document.getElementById('alignToggle').textContent = 'Anchor: Top-Left';
+      } else {
+        container.style.top = '50%';
+        container.style.left = '50%';
+        container.style.transform = 'translate(-50%, -50%)';
+        document.getElementById('alignToggle').textContent = 'Anchor: Center';
       }
-    });
+      centered = !centered;
+    }
 
-    window.addEventListener('mouseup', () => isDragging = false);
+    toggleAlignment(); // default to centered
   </script>
 </body>
 </html>

@@ -5,49 +5,45 @@
   <title>Scoreboard Input</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #222;
-      color: #eee;
-      padding: 20px;
-    }
-    input, button {
-      padding: 8px;
-      margin: 5px 0;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    img.preview {
-      max-height: 60px;
-      margin: 5px 0;
-      display: block;
-    }
+    body { font-family: Arial, sans-serif; background: #222; color: #eee; padding: 20px; }
+    input, select, button { padding: 8px; margin: 5px; }
+    label { display: block; margin-top: 10px; }
+    img.preview { max-height: 60px; display: block; margin-top: 5px; }
   </style>
 </head>
 <body>
   <h2>Scoreboard Controller</h2>
 
-  <label>Team Left Name: <input id="teamLeft" /></label>
-  <label>Team Right Name: <input id="teamRight" /></label>
-  <label>Team Left Score: <input type="number" id="scoreLeft" /></label>
-  <label>Team Right Score: <input type="number" id="scoreRight" /></label>
+  <label>Team Left:
+    <select id="teamLeftSelect" onchange="loadTeamData('left')"></select>
+    <input id="teamLeft" placeholder="Custom name" />
+  </label>
+  <label>Left Logo: <input type="file" id="logoLeftFile" accept="image/*" onchange="previewImage('logoLeftFile','previewLeft')" />
+    <img id="previewLeft" class="preview" />
+  </label>
 
-  <label>Left Team Color: <input type="color" id="colorLeft" value="#1e88e5" /></label>
-  <label>Right Team Color: <input type="color" id="colorRight" value="#e53935" /></label>
+  <label>Team Right:
+    <select id="teamRightSelect" onchange="loadTeamData('right')"></select>
+    <input id="teamRight" placeholder="Custom name" />
+  </label>
+  <label>Right Logo: <input type="file" id="logoRightFile" accept="image/*" onchange="previewImage('logoRightFile','previewRight')" />
+    <img id="previewRight" class="preview" />
+  </label>
+
+  <label>Left Score: <input type="number" id="scoreLeft" value="0" />
+    <button onclick="changeScore('scoreLeft', 1)">+</button>
+    <button onclick="changeScore('scoreLeft', -1)">−</button>
+  </label>
+  <label>Right Score: <input type="number" id="scoreRight" value="0" />
+    <button onclick="changeScore('scoreRight', 1)">+</button>
+    <button onclick="changeScore('scoreRight', -1)">−</button>
+  </label>
+
+  <label>Left Color: <input type="color" id="colorLeft" /></label>
+  <label>Right Color: <input type="color" id="colorRight" /></label>
 
   <label>Overlay Image: <input type="file" id="overlayFile" accept="image/*" /></label>
-  <img id="overlayPreview" class="preview" />
-
-  <label>Left Logo: <input type="file" id="logoLeftFile" accept="image/*" /></label>
-  <img id="logoLeftPreview" class="preview" />
-
-  <label>Right Logo: <input type="file" id="logoRightFile" accept="image/*" /></label>
-  <img id="logoRightPreview" class="preview" />
-
   <button onclick="updateScoreboard()">Update</button>
-  <button onclick="swapSides()">Swap Logos & Scores</button>
 
   <script>
     const supabase = supabase.createClient(
@@ -55,119 +51,100 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWdlY2ZsZmRka3BpdGxybXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwODMwNzQsImV4cCI6MjA2MTY1OTA3NH0.OgQOx9k71DDdK1yOa7VNKGSgoFD9kNGo8j-bR91zGKE'
     );
 
-    async function uploadFile(file, filename) {
-      if (!file) return null;
-      const { error } = await supabase.storage
-        .from('scoreboard-assets')
-        .upload(filename, file, { upsert: true });
-      if (error) {
-        alert("Upload failed: " + error.message);
-        console.error(error);
-        return null;
-      }
-      const { data } = supabase.storage.from('scoreboard-assets').getPublicUrl(filename);
-      return data?.publicUrl || null;
+    async function fetchTeams() {
+      const { data } = await supabase.from('teams').select('*');
+      ['teamLeftSelect', 'teamRightSelect'].forEach(id => {
+        const select = document.getElementById(id);
+        select.innerHTML = '<option value="">-- Select Team --</option>';
+        data.forEach(team => {
+          const opt = document.createElement('option');
+          opt.value = JSON.stringify(team);
+          opt.textContent = team.name;
+          select.appendChild(opt);
+        });
+      });
     }
 
-    async function updateScoreboard() {
-      const overlayFile = document.getElementById('overlayFile').files[0];
-      const logoLeftFile = document.getElementById('logoLeftFile').files[0];
-      const logoRightFile = document.getElementById('logoRightFile').files[0];
-
-      const overlayUrl = overlayFile ? await uploadFile(overlayFile, 'overlay.png') : null;
-      const logoLeftUrl = logoLeftFile ? await uploadFile(logoLeftFile, 'logo-left.png') : null;
-      const logoRightUrl = logoRightFile ? await uploadFile(logoRightFile, 'logo-right.png') : null;
-
-      const payload = {
-        id: 1,
-        team_left: document.getElementById('teamLeft').value,
-        team_right: document.getElementById('teamRight').value,
-        score_left: parseInt(document.getElementById('scoreLeft').value) || 0,
-        score_right: parseInt(document.getElementById('scoreRight').value) || 0,
-        team_left_color: document.getElementById('colorLeft').value,
-        team_right_color: document.getElementById('colorRight').value
-      };
-
-      if (overlayUrl) payload.overlay_url = overlayUrl;
-      if (logoLeftUrl) payload.logo_left_url = logoLeftUrl;
-      if (logoRightUrl) payload.logo_right_url = logoRightUrl;
-
-      const { error } = await supabase.from('scoreboard').upsert(payload);
-      if (error) {
-        alert("Failed to update scoreboard.");
-        console.error(error);
-      } else {
-        alert("Scoreboard updated!");
-        loadScoreboard(); // refresh preview
-      }
-    }
-
-    async function swapSides() {
-      const teamLeft = document.getElementById('teamLeft').value;
-      const teamRight = document.getElementById('teamRight').value;
-      const scoreLeft = document.getElementById('scoreLeft').value;
-      const scoreRight = document.getElementById('scoreRight').value;
-      const colorLeft = document.getElementById('colorLeft').value;
-      const colorRight = document.getElementById('colorRight').value;
-
-      document.getElementById('teamLeft').value = teamRight;
-      document.getElementById('teamRight').value = teamLeft;
-      document.getElementById('scoreLeft').value = scoreRight;
-      document.getElementById('scoreRight').value = scoreLeft;
-      document.getElementById('colorLeft').value = colorRight;
-      document.getElementById('colorRight').value = colorLeft;
-
-      const { data, error } = await supabase
-        .from('scoreboard')
-        .select('logo_left_url, logo_right_url')
-        .eq('id', 1)
-        .single();
-
-      if (error) {
-        console.error("Error swapping logos:", error);
-        return;
-      }
-
-      await supabase.from('scoreboard').update({
-        team_left: teamRight,
-        team_right: teamLeft,
-        score_left: parseInt(scoreRight),
-        score_right: parseInt(scoreLeft),
-        logo_left_url: data.logo_right_url,
-        logo_right_url: data.logo_left_url,
-        team_left_color: colorRight,
-        team_right_color: colorLeft
-      }).eq('id', 1);
-
-      loadScoreboard();
-    }
-
-    async function loadScoreboard() {
-      const { data, error } = await supabase
-        .from('scoreboard')
-        .select('*')
-        .eq('id', 1)
-        .single();
-
-      if (error || !data) {
-        console.error('Failed to load scoreboard:', error);
-        alert("Error loading scoreboard.");
-        return;
-      }
+    async function fetchScoreboardState() {
+      const { data } = await supabase.from('scoreboard').select('*').eq('id', 1).single();
+      if (!data) return;
 
       document.getElementById('teamLeft').value = data.team_left || '';
       document.getElementById('teamRight').value = data.team_right || '';
       document.getElementById('scoreLeft').value = data.score_left ?? 0;
       document.getElementById('scoreRight').value = data.score_right ?? 0;
-      document.getElementById('colorLeft').value = data.team_left_color || '#1e88e5';
-      document.getElementById('colorRight').value = data.team_right_color || '#e53935';
-
-      document.getElementById('overlayPreview').src = data.overlay_url || '';
-      document.getElementById('logoLeftPreview').src = data.logo_left_url || '';
-      document.getElementById('logoRightPreview').src = data.logo_right_url || '';
+      document.getElementById('colorLeft').value = data.color_left || '#ffffff';
+      document.getElementById('colorRight').value = data.color_right || '#ffffff';
+      document.getElementById('previewLeft').src = data.logo_left_url || '';
+      document.getElementById('previewRight').src = data.logo_right_url || '';
     }
 
-    document.addEventListener('DOMContentLoaded', loadScoreboard);
+    function previewImage(fileInputId, imgPreviewId) {
+      const file = document.getElementById(fileInputId).files[0];
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById(imgPreviewId).src = e.target.result;
+      };
+      if (file) reader.readAsDataURL(file);
+    }
+
+    function loadTeamData(side) {
+      const team = JSON.parse(document.getElementById('team' + capitalize(side) + 'Select').value || '{}');
+      document.getElementById('team' + capitalize(side)).value = team.name || '';
+      document.getElementById('color' + capitalize(side)).value = team.color || '#ffffff';
+    }
+
+    function changeScore(id, delta) {
+      const input = document.getElementById(id);
+      input.value = parseInt(input.value || 0) + delta;
+    }
+
+    function capitalize(word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }
+
+    async function uploadFile(file, name) {
+      if (!file) return null;
+      const filename = `logos/${name.toLowerCase().replace(/\\s+/g, '_')}.png`;
+      const { error } = await supabase.storage
+        .from('scoreboard-assets')
+        .upload(filename, file, { upsert: true });
+      if (error) { alert("Upload failed: " + error.message); return null; }
+      const { data } = supabase.storage.from('scoreboard-assets').getPublicUrl(filename);
+      return data.publicUrl;
+    }
+
+    async function updateScoreboard() {
+      const teamLeftName = document.getElementById('teamLeft').value.trim();
+      const teamRightName = document.getElementById('teamRight').value.trim();
+
+      const logoLeftFile = document.getElementById('logoLeftFile').files[0];
+      const logoRightFile = document.getElementById('logoRightFile').files[0];
+      const overlayFile = document.getElementById('overlayFile').files[0];
+
+      const logoLeftUrl = logoLeftFile ? await uploadFile(logoLeftFile, teamLeftName) : null;
+      const logoRightUrl = logoRightFile ? await uploadFile(logoRightFile, teamRightName) : null;
+      const overlayUrl = overlayFile ? await uploadFile(overlayFile, 'overlay') : null;
+
+      const payload = {
+        id: 1,
+        team_left: teamLeftName,
+        team_right: teamRightName,
+        score_left: parseInt(document.getElementById('scoreLeft').value),
+        score_right: parseInt(document.getElementById('scoreRight').value),
+        color_left: document.getElementById('colorLeft').value,
+        color_right: document.getElementById('colorRight').value
+      };
+      if (logoLeftUrl) payload.logo_left_url = logoLeftUrl;
+      if (logoRightUrl) payload.logo_right_url = logoRightUrl;
+      if (overlayUrl) payload.overlay_url = overlayUrl;
+
+      const { error } = await supabase.from('scoreboard').upsert(payload);
+      if (error) console.error('Update error:', error);
+    }
+
+    fetchTeams();
+    fetchScoreboardState();
   </script>
 </body>
 </html>

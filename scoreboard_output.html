@@ -20,7 +20,6 @@
       resize: both;
       overflow: hidden;
       cursor: move;
-      border: 2px dashed transparent;
     }
 
     #overlayImage {
@@ -83,10 +82,8 @@
 <body>
   <div id="overlayContainer">
     <img id="overlayImage" src="" alt="Overlay" />
-
     <img id="logoLeft" class="team-logo" />
     <img id="logoRight" class="team-logo" />
-
     <div id="teamLeftName" class="text-overlay"></div>
     <div id="teamRightName" class="text-overlay"></div>
     <div id="scoreLeft" class="text-overlay"></div>
@@ -106,24 +103,22 @@
         .eq('id', 1)
         .single();
 
-      if (error) {
-        console.error('Failed to load scoreboard:', error);
-        return;
-      }
+      if (error) return;
 
+      const timestamp = Date.now(); // prevent image caching
       document.getElementById('teamLeftName').textContent = data.team_left || '';
       document.getElementById('teamRightName').textContent = data.team_right || '';
       document.getElementById('scoreLeft').textContent = data.score_left ?? '0';
       document.getElementById('scoreRight').textContent = data.score_right ?? '0';
-      document.getElementById('logoLeft').src = data.logo_left_url || '';
-      document.getElementById('logoRight').src = data.logo_right_url || '';
-      document.getElementById('overlayImage').src = data.overlay_url || '';
+      document.getElementById('overlayImage').src = `${data.overlay_url}?t=${timestamp}`;
+      document.getElementById('logoLeft').src = `${data.logo_left_url}?t=${timestamp}`;
+      document.getElementById('logoRight').src = `${data.logo_right_url}?t=${timestamp}`;
     }
 
     fetchScoreboard();
-    setInterval(fetchScoreboard, 1000); // live updates
+    setInterval(fetchScoreboard, 1000); // auto-refresh
 
-    // Draggable support
+    // Dragging
     const container = document.getElementById('overlayContainer');
     let isDragging = false, offsetX = 0, offsetY = 0;
 

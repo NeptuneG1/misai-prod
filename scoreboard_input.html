@@ -1,9 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Scoreboard Input</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -29,18 +29,45 @@
   <label>Team Left Score: <input type="number" id="scoreLeft" /></label>
   <label>Team Right Score: <input type="number" id="scoreRight" /></label>
   <label>Match Info: <input id="matchInfo" /></label>
-  
+
+  <label>Left Logo: <input type="file" id="logoLeft" /></label>
+  <label>Right Logo: <input type="file" id="logoRight" /></label>
+
   <button onclick="updateScoreboard()">Update Scoreboard</button>
 
   <script>
-    function updateScoreboard() {
-      localStorage.setItem('scoreboardData', JSON.stringify({
-        teamLeft: document.getElementById('teamLeft').value,
-        teamRight: document.getElementById('teamRight').value,
-        scoreLeft: document.getElementById('scoreLeft').value,
-        scoreRight: document.getElementById('scoreRight').value,
-        matchInfo: document.getElementById('matchInfo').value
-      }));
+    const supabase = supabase.createClient('SUPABASE_URL', 'SUPABASE_KEY');
+
+    async function uploadImage(file, path) {
+      if (!file) return null;
+      const { data, error } = await supabase.storage.from('scoreboard-assets').upload(path, file, { upsert: true });
+      if (error) {
+        console.error('Upload error:', error.message);
+        return null;
+      }
+      const { data: urlData } = supabase.storage.from('scoreboard-assets').getPublicUrl(path);
+      return urlData.publicUrl;
+    }
+
+    async function updateScoreboard() {
+      const logoLeft = document.getElementById('logoLeft').files[0];
+      const logoRight = document.getElementById('logoRight').files[0];
+
+      const logoLeftUrl = await uploadImage(logoLeft, 'logo-left.png');
+      const logoRightUrl = await uploadImage(logoRight, 'logo-right.png');
+
+      const { error } = await supabase.from('scoreboard').upsert({
+        id: 1,
+        team_left: document.getElementById('teamLeft').value,
+        team_right: document.getElementById('teamRight').value,
+        score_left: parseInt(document.getElementById('scoreLeft').value),
+        score_right: parseInt(document.getElementById('scoreRight').value),
+        match_info: document.getElementById('matchInfo').value,
+        logo_left_url: logoLeftUrl,
+        logo_right_url: logoRightUrl
+      });
+
+      if (error) console.error('Error updating:', error);
     }
   </script>
 </body>

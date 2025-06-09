@@ -322,6 +322,12 @@
         updateStepDisplay();
       });
       
+      function getTeamName(code) {
+        const t1 = document.getElementById("team1Name").value || "Team 1";
+        const t2 = document.getElementById("team2Name").value || "Team 2";
+        return code === "T1" ? t1 : t2;
+      }
+
       function updateStepDisplay() {
         const step = currentFlow[currentStepIndex];
         if (!step) {
@@ -385,7 +391,7 @@
             <img src="${map.url}" alt="${map.name}" />
             <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
-            <div class="side">Picked by ${step.team}</div>
+            <div class="side">Picked by ${getTeamName(step.team)}</div>
           `;
         }
       

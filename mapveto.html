@@ -419,16 +419,7 @@
                grid.appendChild(card);
              });
            }
-         <!-- SIDE PICKER OVERLAY -->
-         <div id="sidePickerOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; justify-content:center; align-items:center; flex-direction:column; color:#fff; font-size:1.5rem;">
-         <div id="sidePickerText" style="margin-bottom:20px;">Choose side for map</div>
-         <div style="display:flex; gap:20px;">
-           <button onclick="selectSide('Blue')" style="padding:10px 20px; font-size:1.2rem;">Blue</button>
-           <button onclick="selectSide('Red')" style="padding:10px 20px; font-size:1.2rem;">Red</button>
-         </div>
-         </div>
-         
-         <script>
+
          let pendingPick = null;
          
          function handleMapClick(map, step) {

@@ -266,141 +266,141 @@
       </div>
       <script>
          document.addEventListener("DOMContentLoaded", function () {
-           const mapPools = {
-             Hardpoint: [
-               { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
-               { name: "Apocalypse", url: "https://i.imgur.com/0zGGSqM.png" },
-               { name: "Hacienda", url: "https://i.imgur.com/u4ppFlW.png" },
-               { name: "Slums", url: "https://i.imgur.com/U4aFFoi.png" },
-               { name: "Combine", url: "https://i.imgur.com/zv4Ffz2.png" }
-             ],
-             "Search and Destroy": [
-               { name: "Tunisia", url: "https://i.imgur.com/bDsFBor.png" },
-               { name: "Firing Range", url: "https://i.imgur.com/NCxsY60.png" },
-               { name: "Kurohana Metropolis", url: "https://i.imgur.com/gichuj1.png" },
-               { name: "Standoff", url: "https://i.imgur.com/tT7ulSk.png" },
-               { name: "Coastal", url: "https://i.imgur.com/JStaBHR.png" }
-             ],
-             Control: [
-               { name: "Raid", url: "https://i.imgur.com/URdHUyt.png" },
-               { name: "Take Off", url: "https://i.imgur.com/krTgidC.png" },
-               { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
-             ]
-           };
-         
-           const vetoFlows = {
-             bo3: [
-               { type: "ban", team: "T1", mode: "Hardpoint" },
-               { type: "ban", team: "T2", mode: "Hardpoint" },
-               { type: "ban", team: "T1", mode: "Hardpoint" },
-               { type: "ban", team: "T2", mode: "Hardpoint" },
-               { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T1" },
-               { type: "ban", team: "T2", mode: "Search and Destroy" },
-               { type: "ban", team: "T1", mode: "Search and Destroy" },
-               { type: "ban", team: "T2", mode: "Search and Destroy" },
-               { type: "ban", team: "T1", mode: "Search and Destroy" },
-               { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T2" },
-               { type: "ban", team: "T1", mode: "Control" },
-               { type: "ban", team: "T2", mode: "Control" },
-               { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" }
-             ],
-             bo5: [
-               { type: "ban", team: "T1", mode: "Hardpoint" },
-               { type: "ban", team: "T2", mode: "Hardpoint" },
-               { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
-               { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
-               { type: "ban", team: "T2", mode: "Search and Destroy" },
-               { type: "ban", team: "T1", mode: "Search and Destroy" },
-               { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
-               { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4, sidePicker: "T2" },
-               { type: "ban", team: "T1", mode: "Control" },
-               { type: "ban", team: "T2", mode: "Control" },
-               { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" }
-             ],
-             bo7: [
-               { type: "ban", team: "T1", mode: "Hardpoint" },
-               { type: "ban", team: "T2", mode: "Hardpoint" },
-               { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
-               { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
-               { type: "ban", team: "T2", mode: "Search and Destroy" },
-               { type: "ban", team: "T1", mode: "Search and Destroy" },
-               { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
-               { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4, sidePicker: "T2" },
-               { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 6, sidePicker: "T2" },
-               { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T2" },
-               { type: "pick", team: "T2", mode: "Control", mapIndex: 5, sidePicker: "T1" }
-             ],
-             gfbo7: [
-               { type: "ban", team: "T1", mode: "Hardpoint" },
-               { type: "ban", team: "T2", mode: "Hardpoint" },
-               { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
-               { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
-               { type: "ban", team: "T2", mode: "Search and Destroy" },
-               { type: "ban", team: "T1", mode: "Search and Destroy" },
-               { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
-               { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 6, sidePicker: "T2" },
-               { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" },
-               { type: "pick", team: "T2", mode: "Control", mapIndex: 5, sidePicker: "T1" }
-             ]
-           };
-         
-           let usedMaps = [];
-           let currentStepIndex = 0;
-           let currentFlow = vetoFlows.bo5;
-           const history = [];
-           let redoStack = [];
-         
-           document.getElementById("formatSelect").addEventListener("change", () => {
-             currentStepIndex = 0;
-             usedMaps = [];
-             currentFlow = vetoFlows[document.getElementById("formatSelect").value];
-             document.getElementById("banLeft").innerHTML = "";
-             document.getElementById("banRight").innerHTML = "";
-             renderSeries();
-             renderMapGrid();
-             updateStepDisplay();
-           });
-         
-           function getTeamName(code) {
-             const t1 = document.getElementById("team1Name").value || "Team 1";
-             const t2 = document.getElementById("team2Name").value || "Team 2";
-             return code === "T1" ? t1 : t2;
-           }
-         
-           function updateStepDisplay() {
-             const step = currentFlow[currentStepIndex];
-             if (!step) {
-               document.getElementById("stepDisplay").textContent = "✅ Veto complete!";
-               return;
-             }
-             const action = step.type === "ban" ? "Ban" : "Pick";
-             document.getElementById("stepDisplay").textContent = `Step ${currentStepIndex + 1}: ${getTeamName(step.team)} - ${action} (${step.mode})`;
-           }
-         
-           function renderSeries() {
-             const row = document.getElementById("seriesRow");
-             row.innerHTML = "";
-             const picks = currentFlow.filter(s => s.type === "pick");
-             const maxIndex = Math.max(...picks.map(s => s.mapIndex));
-             const team1Name = getTeamName("T1");
-             const team2Name = getTeamName("T2");
-         
-             for (let i = 0; i <= maxIndex; i++) {
-               const pick = picks.find(p => p.mapIndex === i);
-               const sideTeam = pick?.sidePicker === "T1" ? team1Name : team2Name;
-               const mode = pick?.mode || "...";
-         
-               const div = document.createElement("div");
-               div.className = "series-slot";
-               div.setAttribute("data-index", i);
-               div.innerHTML = `
-                 Map ${i + 1}
-                 <div class="mode">${mode}</div>
-                 <div class="side">Side: ${sideTeam}</div>
-               `;
-               row.appendChild(div);
-             }
-           }
+          const mapPools = {
+            Hardpoint: [
+              { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
+              { name: "Apocalypse", url: "https://i.imgur.com/0zGGSqM.png" },
+              { name: "Hacienda", url: "https://i.imgur.com/u4ppFlW.png" },
+              { name: "Slums", url: "https://i.imgur.com/U4aFFoi.png" },
+              { name: "Combine", url: "https://i.imgur.com/zv4Ffz2.png" }
+            ],
+            "Search and Destroy": [
+              { name: "Tunisia", url: "https://i.imgur.com/bDsFBor.png" },
+              { name: "Firing Range", url: "https://i.imgur.com/NCxsY60.png" },
+              { name: "Kurohana Metropolis", url: "https://i.imgur.com/gichuj1.png" },
+              { name: "Standoff", url: "https://i.imgur.com/tT7ulSk.png" },
+              { name: "Coastal", url: "https://i.imgur.com/JStaBHR.png" }
+            ],
+            Control: [
+              { name: "Raid", url: "https://i.imgur.com/URdHUyt.png" },
+              { name: "Take Off", url: "https://i.imgur.com/krTgidC.png" },
+              { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
+            ]
+          };
+      
+          const vetoFlows = {
+            bo3: [
+              { type: "ban", team: "T1", mode: "Hardpoint" },
+              { type: "ban", team: "T2", mode: "Hardpoint" },
+              { type: "ban", team: "T1", mode: "Hardpoint" },
+              { type: "ban", team: "T2", mode: "Hardpoint" },
+              { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T1" },
+              { type: "ban", team: "T2", mode: "Search and Destroy" },
+              { type: "ban", team: "T1", mode: "Search and Destroy" },
+              { type: "ban", team: "T2", mode: "Search and Destroy" },
+              { type: "ban", team: "T1", mode: "Search and Destroy" },
+              { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T2" },
+              { type: "ban", team: "T1", mode: "Control" },
+              { type: "ban", team: "T2", mode: "Control" },
+              { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" }
+            ],
+            bo5: [
+              { type: "ban", team: "T1", mode: "Hardpoint" },
+              { type: "ban", team: "T2", mode: "Hardpoint" },
+              { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
+              { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
+              { type: "ban", team: "T2", mode: "Search and Destroy" },
+              { type: "ban", team: "T1", mode: "Search and Destroy" },
+              { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
+              { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4, sidePicker: "T2" },
+              { type: "ban", team: "T1", mode: "Control" },
+              { type: "ban", team: "T2", mode: "Control" },
+              { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" }
+            ],
+            bo7: [
+              { type: "ban", team: "T1", mode: "Hardpoint" },
+              { type: "ban", team: "T2", mode: "Hardpoint" },
+              { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
+              { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
+              { type: "ban", team: "T2", mode: "Search and Destroy" },
+              { type: "ban", team: "T1", mode: "Search and Destroy" },
+              { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
+              { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4, sidePicker: "T2" },
+              { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 6, sidePicker: "T2" },
+              { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T2" },
+              { type: "pick", team: "T2", mode: "Control", mapIndex: 5, sidePicker: "T1" }
+            ],
+            gfbo7: [
+              { type: "ban", team: "T1", mode: "Hardpoint" },
+              { type: "ban", team: "T2", mode: "Hardpoint" },
+              { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
+              { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
+              { type: "ban", team: "T2", mode: "Search and Destroy" },
+              { type: "ban", team: "T1", mode: "Search and Destroy" },
+              { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
+              { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 6, sidePicker: "T2" },
+              { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" },
+              { type: "pick", team: "T2", mode: "Control", mapIndex: 5, sidePicker: "T1" }
+            ]
+          };
+      
+          let usedMaps = [];
+          let currentStepIndex = 0;
+          let currentFlow = vetoFlows.bo5;
+          const history = [];
+          let redoStack = [];
+      
+          document.getElementById("formatSelect").addEventListener("change", () => {
+            currentStepIndex = 0;
+            usedMaps = [];
+            currentFlow = vetoFlows[document.getElementById("formatSelect").value];
+            document.getElementById("banLeft").innerHTML = "";
+            document.getElementById("banRight").innerHTML = "";
+            renderSeries();
+            renderMapGrid();
+            updateStepDisplay();
+          });
+      
+          function getTeamName(code) {
+            const t1 = document.getElementById("team1Name").value || "Team 1";
+            const t2 = document.getElementById("team2Name").value || "Team 2";
+            return code === "T1" ? t1 : t2;
+          }
+      
+          function updateStepDisplay() {
+            const step = currentFlow[currentStepIndex];
+            if (!step) {
+              document.getElementById("stepDisplay").textContent = "✅ Veto complete!";
+              return;
+            }
+            const action = step.type === "ban" ? "Ban" : "Pick";
+            document.getElementById("stepDisplay").textContent = `Step ${currentStepIndex + 1}: ${getTeamName(step.team)} - ${action} (${step.mode})`;
+          }
+      
+          function renderSeries() {
+            const row = document.getElementById("seriesRow");
+            row.innerHTML = "";
+            const picks = currentFlow.filter(s => s.type === "pick");
+            const maxIndex = Math.max(...picks.map(s => s.mapIndex));
+            const team1Name = getTeamName("T1");
+            const team2Name = getTeamName("T2");
+      
+            for (let i = 0; i <= maxIndex; i++) {
+              const pick = picks.find(p => p.mapIndex === i);
+              const sideTeam = pick?.sidePicker === "T1" ? team1Name : team2Name;
+              const mode = pick?.mode || "...";
+      
+              const div = document.createElement("div");
+              div.className = "series-slot";
+              div.setAttribute("data-index", i);
+              div.innerHTML = `
+                Map ${i + 1}
+                <div class="mode">${mode}</div>
+                <div class="side">Side: ${sideTeam}</div>
+              `;
+              row.appendChild(div);
+            }
+          }
          
            function renderMapGrid() {
              const grid = document.getElementById("mapGrid");

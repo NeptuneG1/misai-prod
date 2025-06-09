@@ -415,7 +415,8 @@
           type: step.type,
           mode: step.mode,
           mapIndex: step.mapIndex,
-          mapUrl: map.url
+          mapUrl: map.url,
+          sidePicker: step.sidePicker
         });
         redoStack = [];
       
@@ -436,13 +437,15 @@
       
         } else if (step.type === "pick") {
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
-          const teamName = getTeamName(step.team);
+          const side = step.sidePicker === "T1"
+            ? (document.getElementById("team1Name").value || "Team 1")
+            : (document.getElementById("team2Name").value || "Team 2");
+      
           seriesSlot.innerHTML = `
             <img src="${map.url}" alt="${map.name}" />
             <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
-            const side = document.querySelector(`.series-slot[data-index="${step.mapIndex}"] select`)?.value || "TBD";
-              <div class="side">Side: ${side} (chosen by ${getTeamName(step.sidePicker)})</div>
+            <div class="side">Side: ${side} (chosen by ${getTeamName(step.sidePicker)})</div>
           `;
         }
       

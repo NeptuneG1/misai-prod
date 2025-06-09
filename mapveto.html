@@ -188,7 +188,7 @@
 
   <div class="top-controls">
     <div class="team-box">
-      <div><strong>Team 1 (Blue)</strong></div>
+      <div><strong>Team 1</strong></div>
       <input id="team1Name" placeholder="Team 1 Name" />
     </div>
     <div class="format-select">
@@ -201,7 +201,7 @@
       </select>
     </div>
     <div class="team-box">
-      <div><strong>Team 2 (Red)</strong></div>
+      <div><strong>Team 2</strong></div>
       <input id="team2Name" placeholder="Team 2 Name" />
     </div>
   </div>
@@ -348,16 +348,20 @@
       function renderSeries() {
         const row = document.getElementById("seriesRow");
         row.innerHTML = "";
+      
         const picks = currentFlow.filter(s => s.type === "pick");
-        const maxIndex = Math.max(...picks.map(s => s.mapIndex));
+        const maxIndex = Math.max(...picks.map(s => s.mapIndex), 0);
+      
         const team1Name = getTeamName("T1");
         const team2Name = getTeamName("T2");
-
+      
         for (let i = 0; i <= maxIndex; i++) {
           const pick = picks.find(p => p.mapIndex === i);
-          const sideTeam = pick?.sidePicker === "T1" ? team1Name : team2Name;
           const mode = pick?.mode || "...";
-
+          const sideTeam = pick?.sidePicker
+            ? `${pick.sidePicker === "T1" ? team1Name : team2Name} (chooses side)`
+            : "TBD";
+      
           const div = document.createElement("div");
           div.className = "series-slot";
           div.setAttribute("data-index", i);

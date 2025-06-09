@@ -210,7 +210,19 @@
     </div>
   
       <div class="current-step" id="stepDisplay">Step: Team 1 - Ban (Hardpoint)</div>
-  
+
+    <div style="text-align: center; margin: 10px;">
+      <button onclick="undoVeto()" style="padding: 8px 12px; font-size: 1rem; margin: 0 6px; background: #ffaa00; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        ↩️ Undo
+      </button>
+      <button onclick="redoVeto()" style="padding: 8px 12px; font-size: 1rem; margin: 0 6px; background: #00c853; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        ↪️ Redo
+      </button>
+      <button onclick="resetVeto()" style="padding: 8px 12px; font-size: 1rem; margin: 0 6px; background: #ff5555; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        🔁 Reset
+      </button>
+    </div>
+
     <div class="veto-row">
       <div class="ban-panel">
         <div>BANS (BLUE)</div>
@@ -229,6 +241,14 @@
     <div class="map-grid" id="mapGrid"></div>
 
     <script>
+
+      let usedMaps = [];
+      let currentStepIndex = 0;
+      let currentFlow = vetoFlows.bo5;
+      
+      const history = [];
+      let redoStack = [];
+
       const mapPools = {
         Hardpoint: [
           { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
@@ -372,10 +392,26 @@
       
       function handleMapClick(map, step) {
         document.getElementById("mainPreview").src = map.url;
+      
+        // Record step in history
+        history.push({
+          stepIndex: currentStepIndex,
+          mapName: map.name,
+          team: step.team,
+          type: step.type,
+          mode: step.mode,
+          mapIndex: step.mapIndex,
+          mapUrl: map.url
+        });
+        redoStack = [];
+      
         usedMaps.push(map.name);
       
         if (step.type === "ban") {
-          const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
+          const target = step.team === "T1"
+            ? document.getElementById("banLeft")
+            : document.getElementById("banRight");
+      
           const banItem = document.createElement("div");
           banItem.className = "ban-item";
           banItem.innerHTML = `
@@ -383,15 +419,15 @@
             <div class="label">${step.mode}<br>${map.name}</div>
           `;
           target.appendChild(banItem);
-        }
       
-        else if (step.type === "pick") {
+        } else if (step.type === "pick") {
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          const teamName = getTeamName(step.team);
           seriesSlot.innerHTML = `
             <img src="${map.url}" alt="${map.name}" />
             <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
-            <div class="side">Picked by ${getTeamName(step.team)}</div>
+            <div class="side">Picked by ${teamName}</div>
           `;
         }
       
@@ -399,6 +435,56 @@
         renderMapGrid();
         updateStepDisplay();
       }
+
+      function undoVeto() {
+        if (history.length === 0) return;
+        const last = history.pop();
+        redoStack.push(last);
+        usedMaps = usedMaps.filter(name => name !== last.mapName);
+        currentStepIndex = last.stepIndex;
+        renderSeries();
+        renderMapGrid();
+        updateStepDisplay();
+        document.getElementById("banLeft").innerHTML = "";
+        document.getElementById("banRight").innerHTML = "";
+        history.forEach(h => applyStepFromHistory(h));
+      }
+      
+      function redoVeto() {
+        if (redoStack.length === 0) return;
+        const next = redoStack.pop();
+        usedMaps.push(next.mapName);
+        history.push(next);
+        currentStepIndex = next.stepIndex + 1;
+        applyStepFromHistory(next);
+        renderMapGrid();
+        updateStepDisplay();
+      }
+      
+      function applyStepFromHistory(step) {
+        if (step.type === "ban") {
+          const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
+          const banItem = document.createElement("div");
+          banItem.className = "ban-item";
+          banItem.innerHTML = `
+            <img src="${step.mapUrl}" alt="${step.mapName}" />
+            <div class="label">${step.mode}<br>${step.mapName}</div>
+          `;
+          target.appendChild(banItem);
+        } else if (step.type === "pick") {
+          const teamName = step.team === "T1"
+            ? (document.getElementById("team1Name").value || "Team 1")
+            : (document.getElementById("team2Name").value || "Team 2");
+          const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          seriesSlot.innerHTML = `
+            <img src="${step.mapUrl}" alt="${step.mapName}" />
+            <div class="map-name">${step.mapName}</div>
+            <div class="mode">${step.mode}</div>
+            <div class="side">Picked by ${teamName}</div>
+          `;
+        }
+      }
+
       
       renderSeries();
       renderMapGrid();

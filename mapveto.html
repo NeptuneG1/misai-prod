@@ -25,6 +25,7 @@
       align-items: center;
       padding: 10px;
       background: #1a1a1a;
+      flex-wrap: wrap;
     }
     .team-box {
       text-align: center;
@@ -38,8 +39,7 @@
       border-bottom: 2px solid #555;
       padding: 5px;
     }
-    .format-select select,
-    .mode-select select {
+    .format-select select {
       background: #222;
       color: #fff;
       padding: 5px 10px;
@@ -49,6 +49,7 @@
       display: flex;
       justify-content: space-between;
       padding: 20px;
+      gap: 20px;
     }
     .ban-panel {
       width: 20%;
@@ -62,7 +63,7 @@
       margin-top: 10px;
     }
     .ban-slot {
-      cursor: pointer;
+      cursor: default;
       min-height: 100px;
       border: 2px dashed red;
       display: flex;
@@ -147,6 +148,15 @@
       pointer-events: none;
       filter: grayscale(80%);
     }
+    .current-step {
+      background: #202020;
+      text-align: center;
+      padding: 10px;
+      font-size: 1.2rem;
+      color: #00bfff;
+      border-top: 2px solid #333;
+      border-bottom: 2px solid #333;
+    }
   </style>
 </head>
 <body>
@@ -160,10 +170,11 @@
 
     <div class="format-select">
       <label>Match Format:</label><br>
-      <select id="format">
+      <select id="formatSelect">
         <option value="bo3">Best of 3</option>
         <option value="bo5" selected>Best of 5</option>
         <option value="bo7">Best of 7</option>
+        <option value="gfbo7">Grand Finals BO7</option>
       </select>
     </div>
 
@@ -173,131 +184,191 @@
     </div>
   </div>
 
+  <div class="current-step" id="stepDisplay">Step: Team 1 - Ban (Hardpoint)</div>
+
   <div class="veto-row">
     <div class="ban-panel">
       <div>BAN (BLUE)</div>
-      <div class="ban-slot" id="banLeft" onclick="setBan('left')">Click to Ban</div>
+      <div class="ban-slot" id="banLeft">Waiting...</div>
     </div>
     <div class="map-preview">
       <img id="mainPreview" src="https://i.imgur.com/U4aFFoi.png" alt="map preview"/>
     </div>
     <div class="ban-panel">
       <div>BAN (RED)</div>
-      <div class="ban-slot" id="banRight" onclick="setBan('right')">Click to Ban</div>
+      <div class="ban-slot" id="banRight">Waiting...</div>
     </div>
   </div>
 
   <div class="series-row" id="seriesRow"></div>
   <div class="map-grid" id="mapGrid"></div>
+<script>
+const mapPools = {
+  Hardpoint: [
+    { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
+    { name: "Apocalypse", url: "https://i.imgur.com/0zGGSqM.png" },
+    { name: "Hacienda", url: "https://i.imgur.com/u4ppFlW.png" },
+    { name: "Slums", url: "https://i.imgur.com/U4aFFoi.png" },
+    { name: "Combine", url: "https://i.imgur.com/zv4Ffz2.png" }
+  ],
+  "Search and Destroy": [
+    { name: "Tunisia", url: "https://i.imgur.com/bDsFBor.png" },
+    { name: "Firing Range", url: "https://i.imgur.com/NCxsY60.png" },
+    { name: "Kurohana Metropolis", url: "https://i.imgur.com/gichuj1.png" },
+    { name: "Standoff", url: "https://i.imgur.com/tT7ulSk.png" },
+    { name: "Coastal", url: "https://i.imgur.com/JStaBHR.png" }
+  ],
+  Control: [
+    { name: "Raid", url: "https://i.imgur.com/URdHUyt.png" },
+    { name: "Take Off", url: "https://i.imgur.com/krTgidC.png" },
+    { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
+  ]
+};
 
-  <script>
-    const mapPools = {
-      Hardpoint: [
-        { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
-        { name: "Apocalypse", url: "https://i.imgur.com/0zGGSqM.png" },
-        { name: "Hacienda", url: "https://i.imgur.com/u4ppFlW.png" },
-        { name: "Slums", url: "https://i.imgur.com/U4aFFoi.png" },
-        { name: "Combine", url: "https://i.imgur.com/zv4Ffz2.png" }
-      ],
-      "Search and Destroy": [
-        { name: "Tunisia", url: "https://i.imgur.com/bDsFBor.png" },
-        { name: "Firing Range", url: "https://i.imgur.com/NCxsY60.png" },
-        { name: "Kurohana Metropolis", url: "https://i.imgur.com/gichuj1.png" },
-        { name: "Standoff", url: "https://i.imgur.com/tT7ulSk.png" },
-        { name: "Coastal", url: "https://i.imgur.com/JStaBHR.png" }
-      ],
-      Control: [
-        { name: "Raid", url: "https://i.imgur.com/URdHUyt.png" },
-        { name: "Take Off", url: "https://i.imgur.com/krTgidC.png" },
-        { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
-      ]
-    };
+const vetoFlows = {
+  bo3: [
+    { type: "ban", team: "T1", mode: "Hardpoint" },
+    { type: "ban", team: "T2", mode: "Hardpoint" },
+    { type: "ban", team: "T1", mode: "Hardpoint" },
+    { type: "ban", team: "T2", mode: "Hardpoint" },
+    { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0 },
 
-    const formatMapOrder = {
-      bo3: ["Hardpoint", "Search and Destroy", "Control"],
-      bo5: ["Hardpoint", "Search and Destroy", "Control", "Hardpoint", "Search and Destroy"],
-      bo7: ["Hardpoint", "Search and Destroy", "Control", "Hardpoint", "Search and Destroy", "Control", "Search and Destroy"]
-    };
+    { type: "ban", team: "T2", mode: "Search and Destroy" },
+    { type: "ban", team: "T1", mode: "Search and Destroy" },
+    { type: "ban", team: "T2", mode: "Search and Destroy" },
+    { type: "ban", team: "T1", mode: "Search and Destroy" },
+    { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1 },
 
-    let selectedMaps = [];
-    let selectedBans = { left: null, right: null };
-    let banningTeam = null;
+    { type: "ban", team: "T1", mode: "Control" },
+    { type: "ban", team: "T2", mode: "Control" },
+    { type: "pick", team: "T1", mode: "Control", mapIndex: 2 }
+  ],
+  bo5: [
+    { type: "ban", team: "T1", mode: "Hardpoint" },
+    { type: "ban", team: "T2", mode: "Hardpoint" },
+    { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0 },
+    { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3 },
 
-    function renderSeries() {
-      const format = document.getElementById('format').value;
-      const order = formatMapOrder[format];
-      const container = document.getElementById('seriesRow');
-      container.innerHTML = '';
-      order.forEach((mode, i) => {
-        const div = document.createElement('div');
-        div.className = 'series-slot';
-        div.setAttribute('data-index', i);
-        div.setAttribute('data-mode', mode);
-        div.innerHTML = `Series ${i+1}<div class="mode">${mode}</div><div class="side">Side: ${i % 2 === 0 ? "Blue" : "Red"}</div>`;
-        container.appendChild(div);
-      });
+    { type: "ban", team: "T2", mode: "Search and Destroy" },
+    { type: "ban", team: "T1", mode: "Search and Destroy" },
+    { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1 },
+    { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4 },
+
+    { type: "ban", team: "T1", mode: "Control" },
+    { type: "ban", team: "T2", mode: "Control" },
+    { type: "pick", team: "T1", mode: "Control", mapIndex: 2 }
+  ],
+  bo7: [
+    { type: "ban", team: "T1", mode: "Hardpoint" },
+    { type: "ban", team: "T2", mode: "Hardpoint" },
+    { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0 },
+    { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3 },
+
+    { type: "ban", team: "T2", mode: "Search and Destroy" },
+    { type: "ban", team: "T1", mode: "Search and Destroy" },
+    { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1 },
+    { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4 },
+    { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 6 },
+
+    { type: "pick", team: "T1", mode: "Control", mapIndex: 2 },
+    { type: "pick", team: "T2", mode: "Control", mapIndex: 5 }
+  ],
+  gfbo7: [
+    // same as bo7 except T1 picks SND Map 6 instead of Map 5
+    { type: "ban", team: "T1", mode: "Hardpoint" },
+    { type: "ban", team: "T2", mode: "Hardpoint" },
+    { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0 },
+    { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3 },
+
+    { type: "ban", team: "T2", mode: "Search and Destroy" },
+    { type: "ban", team: "T1", mode: "Search and Destroy" },
+    { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1 },
+    { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 6 },
+
+    { type: "pick", team: "T1", mode: "Control", mapIndex: 2 },
+    { type: "pick", team: "T2", mode: "Control", mapIndex: 5 }
+  ]
+};
+
+let usedMaps = [];
+let currentStepIndex = 0;
+let currentFlow = vetoFlows.bo5;
+
+document.getElementById("formatSelect").addEventListener("change", () => {
+  currentStepIndex = 0;
+  usedMaps = [];
+  currentFlow = vetoFlows[document.getElementById("formatSelect").value];
+  document.getElementById("banLeft").innerHTML = "Waiting...";
+  document.getElementById("banRight").innerHTML = "Waiting...";
+  renderSeries();
+  renderMapGrid();
+  updateStepDisplay();
+});
+
+function updateStepDisplay() {
+  const step = currentFlow[currentStepIndex];
+  if (!step) {
+    document.getElementById("stepDisplay").textContent = "✅ Veto complete!";
+    return;
+  }
+  const action = step.type === "ban" ? "Ban" : "Pick";
+  document.getElementById("stepDisplay").textContent = `Step ${currentStepIndex + 1}: ${step.team === "T1" ? "Team 1 (Blue)" : "Team 2 (Red)"} - ${action} (${step.mode})`;
+}
+
+function renderSeries() {
+  const row = document.getElementById("seriesRow");
+  row.innerHTML = "";
+  const mapIndexes = currentFlow.filter(s => s.type === "pick").map(s => s.mapIndex);
+  const maxIndex = Math.max(...mapIndexes, 0);
+  const filled = new Array(maxIndex + 1).fill(null);
+  filled.forEach((_, i) => {
+    const div = document.createElement("div");
+    div.className = "series-slot";
+    div.setAttribute("data-index", i);
+    div.innerHTML = `Map ${i + 1}<div class="mode">...</div><div class="side">Side: Auto</div>`;
+    row.appendChild(div);
+  });
+}
+
+function renderMapGrid() {
+  const grid = document.getElementById("mapGrid");
+  const step = currentFlow[currentStepIndex];
+  grid.innerHTML = "";
+
+  if (!step) return;
+
+  mapPools[step.mode].forEach(map => {
+    const isUsed = usedMaps.includes(map.name);
+    const card = document.createElement("div");
+    card.className = "map-card" + (isUsed ? " disabled" : "");
+    card.innerHTML = `<img src="${map.url}"><div>${map.name}</div>`;
+    if (!isUsed) {
+      card.onclick = () => handleMapClick(map, step);
     }
+    grid.appendChild(card);
+  });
+}
 
-    function getAllAvailableMaps() {
-      return Object.values(mapPools).flat();
-    }
+function handleMapClick(map, step) {
+  document.getElementById("mainPreview").src = map.url;
+  usedMaps.push(map.name);
 
-    function renderMapGrid() {
-      const grid = document.getElementById('mapGrid');
-      const used = new Set([...selectedMaps, ...Object.values(selectedBans)]);
-      grid.innerHTML = '';
-      getAllAvailableMaps().forEach(map => {
-        const disabled = used.has(map.name);
-        const card = document.createElement('div');
-        card.className = 'map-card' + (disabled ? ' disabled' : '');
-        card.innerHTML = `<img src="${map.url}"/><div>${map.name}</div>`;
-        if (!disabled) {
-          card.onclick = () => handleMapClick(map);
-        }
-        grid.appendChild(card);
-      });
-    }
+  if (step.type === "ban") {
+    const banSlot = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
+    banSlot.innerHTML = `<img src="${map.url}" alt="${map.name}">`;
+  } else if (step.type === "pick") {
+    const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+    seriesSlot.innerHTML = `${map.name}<div class="mode">${step.mode}</div><div class="side">Picked by ${step.team}</div>`;
+  }
 
-    function handleMapClick(map) {
-      document.getElementById('mainPreview').src = map.url;
+  currentStepIndex++;
+  renderMapGrid();
+  updateStepDisplay();
+}
 
-      if (banningTeam) {
-        selectedBans[banningTeam] = map.name;
-        const slot = document.getElementById('ban' + (banningTeam === 'left' ? 'Left' : 'Right'));
-        slot.innerHTML = `<img src="${map.url}" alt="${map.name}"/>`;
-        banningTeam = null;
-        renderMapGrid();
-        return;
-      }
-
-      const slot = [...document.querySelectorAll('.series-slot')].find(slot => !slot.dataset.map);
-      if (slot) {
-        const mode = slot.dataset.mode;
-        if (!mapPools[mode].some(m => m.name === map.name)) return; // block wrong mode
-        slot.innerHTML = `${map.name}<div class="mode">${mode}</div><div class="side">Side: ${slot.querySelector('.side').textContent.split(":")[1]}</div>`;
-        slot.dataset.map = map.name;
-        selectedMaps.push(map.name);
-        renderMapGrid();
-      }
-    }
-
-    function setBan(team) {
-      banningTeam = team;
-      alert(`Click a map to ban for Team ${team === 'left' ? 'Blue' : 'Red'}`);
-    }
-
-    document.getElementById('format').addEventListener('change', () => {
-      selectedMaps = [];
-      selectedBans = { left: null, right: null };
-      banningTeam = null;
-      document.getElementById('banLeft').innerHTML = 'Click to Ban';
-      document.getElementById('banRight').innerHTML = 'Click to Ban';
-      renderSeries();
-      renderMapGrid();
-    });
-
-    renderSeries();
-    renderMapGrid();
-  </script>
+renderSeries();
+renderMapGrid();
+updateStepDisplay();
+</script>
 </body>
 </html>

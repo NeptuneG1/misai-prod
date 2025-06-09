@@ -14,9 +14,39 @@
     }
     h1, h2 {
       color: #ffd700;
+      text-align: center;
     }
-    .mode-section {
+    .team-container {
+      display: flex;
+      justify-content: space-between;
       margin-bottom: 30px;
+    }
+    .team-box {
+      width: 48%;
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 10px;
+      border: 2px solid #444;
+    }
+    .team-box h3 {
+      margin-top: 0;
+      color: #00bfff;
+    }
+    .input-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 6px;
+      border-radius: 5px;
+      border: none;
+      background: #2a2a2a;
+      color: #fff;
     }
     .map-grid {
       display: flex;
@@ -42,15 +72,47 @@
       width: 100%;
       border-radius: 5px;
     }
-    .veto-actions {
-      margin-top: 5px;
-      font-size: 0.85rem;
-      color: #aaa;
+    .mode-section {
+      margin-bottom: 40px;
     }
   </style>
 </head>
 <body>
-  <h1>CODM Map Veto UI</h1>
+  <h1>CODM Map Veto</h1>
+
+  <div class="team-container">
+    <div class="team-box">
+      <h3>Team 1 (Blue)</h3>
+      <div class="input-group">
+        <label for="team1Name">Team Name</label>
+        <input type="text" id="team1Name" placeholder="Enter Team 1 Name">
+      </div>
+      <div class="input-group">
+        <label for="team1Bans">Bans</label>
+        <input type="text" id="team1Bans" placeholder="e.g. Summit, Standoff">
+      </div>
+      <div class="input-group">
+        <label for="team1Picks">Picks</label>
+        <input type="text" id="team1Picks" placeholder="e.g. Slums, Coastal">
+      </div>
+    </div>
+
+    <div class="team-box">
+      <h3>Team 2 (Red)</h3>
+      <div class="input-group">
+        <label for="team2Name">Team Name</label>
+        <input type="text" id="team2Name" placeholder="Enter Team 2 Name">
+      </div>
+      <div class="input-group">
+        <label for="team2Bans">Bans</label>
+        <input type="text" id="team2Bans" placeholder="e.g. Apocalypse, Crossfire">
+      </div>
+      <div class="input-group">
+        <label for="team2Picks">Picks</label>
+        <input type="text" id="team2Picks" placeholder="e.g. Hacienda, Raid">
+      </div>
+    </div>
+  </div>
 
   <div class="mode-section">
     <h2>Hardpoint</h2>
@@ -81,17 +143,6 @@
       <div class="map-card"><img src="https://i.imgur.com/krTgidC.png" alt="Take Off"/><div>Take Off</div></div>
       <div class="map-card"><img src="https://i.imgur.com/TjMmMNJ.png" alt="Crossfire"/><div>Crossfire</div></div>
     </div>
-  </div>
-
-  <div class="mode-section">
-    <h2>Veto Formats</h2>
-    <p>Select a format to begin the veto process:</p>
-    <ul>
-      <li><strong>BO3</strong>: 2 bans each for HP and SnD, 1 ban each for Control, 1 map left per mode</li>
-      <li><strong>BO5</strong>: 1 ban and 1 pick each for HP/SnD, 1 ban each for Control</li>
-      <li><strong>BO7</strong>: 1 ban and 1 pick each for HP/SnD, 1 pick each for Control, 1 SnD map left</li>
-      <li><strong>GF BO7 w/Adv</strong>: Same as BO7, Control picks flipped</li>
-    </ul>
   </div>
 </body>
 </html>

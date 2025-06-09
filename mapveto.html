@@ -446,13 +446,13 @@
                mapName: map.name,
                mapUrl: map.url
              };
-             document.getElementById("sidePickerText").textContent = `Pick a side for ${map.name}`;
-             document.getElementById("sidePickerOverlay").style.display = "flex";
+             document.getElementById("sideSelectOverlay").style.display = "flex";
+             document.getElementById("sideSelectPrompt").textContent = `Choose a side for ${map.name}`;
            }
          }
          
          function selectSide(side) {
-           document.getElementById("sidePickerOverlay").style.display = "none";
+           document.getElementById("sideSelectOverlay").style.display = "none";
          
            const step = pendingPick;
            const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);

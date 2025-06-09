@@ -482,6 +482,90 @@
            renderMapGrid();
            updateStepDisplay();
          }
+
+           function undoVeto() {
+             if (history.length === 0) return;
+         
+             const last = history.pop();
+             redoStack.push(last);
+             usedMaps = usedMaps.filter(m => m !== last.mapName);
+             currentStepIndex = last.stepIndex !== undefined ? last.stepIndex : currentStepIndex - 1;
+         
+             // Re-render UI based on new history
+             document.getElementById("banLeft").innerHTML = "";
+             document.getElementById("banRight").innerHTML = "";
+             renderSeries();
+         
+             history.forEach(h => {
+               if (h.type === "ban") {
+                 const target = h.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
+                 const banItem = document.createElement("div");
+                 banItem.className = "ban-item";
+                 banItem.innerHTML = `
+                   <img src="${h.mapUrl}" alt="${h.mapName}" />
+                   <div class="label">${h.mode}<br>${h.mapName}</div>
+                 `;
+                 target.appendChild(banItem);
+               } else if (h.type === "pick") {
+                 const slot = document.querySelector(`.series-slot[data-index="${h.mapIndex}"]`);
+                 slot.innerHTML = `
+                   <img src="${h.mapUrl}" alt="${h.mapName}" />
+                   <div class="map-name">${h.mapName}</div>
+                   <div class="mode">${h.mode}</div>
+                   <div class="side">${h.blueTeam} (Blue) vs ${h.redTeam} (Red)</div>
+                 `;
+               }
+             });
+         
+             renderMapGrid();
+             updateStepDisplay();
+           }
+         
+           function redoVeto() {
+             if (redoStack.length === 0) return;
+         
+             const step = redoStack.pop();
+             history.push(step);
+             usedMaps.push(step.mapName);
+             currentStepIndex++;
+         
+             if (step.type === "ban") {
+               const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
+               const banItem = document.createElement("div");
+               banItem.className = "ban-item";
+               banItem.innerHTML = `
+                 <img src="${step.mapUrl}" alt="${step.mapName}" />
+                 <div class="label">${step.mode}<br>${step.mapName}</div>
+               `;
+               target.appendChild(banItem);
+             } else if (step.type === "pick") {
+               const slot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+               slot.innerHTML = `
+                 <img src="${step.mapUrl}" alt="${step.mapName}" />
+                 <div class="map-name">${step.mapName}</div>
+                 <div class="mode">${step.mode}</div>
+                 <div class="side">${step.blueTeam} (Blue) vs ${step.redTeam} (Red)</div>
+               `;
+             }
+         
+             renderMapGrid();
+             updateStepDisplay();
+           }
+         
+           function resetVeto() {
+             usedMaps = [];
+             currentStepIndex = 0;
+             history.length = 0;
+             redoStack.length = 0;
+         
+             document.getElementById("banLeft").innerHTML = "";
+             document.getElementById("banRight").innerHTML = "";
+             document.getElementById("mainPreview").src = "https://i.imgur.com/HvwSkri.png";
+         
+             renderSeries();
+             renderMapGrid();
+             updateStepDisplay();
+           }
       </script>
    </body>
 </html>

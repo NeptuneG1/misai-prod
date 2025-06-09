@@ -341,7 +341,7 @@
           return;
         }
         const action = step.type === "ban" ? "Ban" : "Pick";
-        const teamLabel = step.team === "T1" ? "Team 1 (Blue)" : "Team 2 (Red)";
+        const teamLabel = step.team === "T1" ? "Team 1" : "Team 2";
         document.getElementById("stepDisplay").textContent = `Step ${currentStepIndex + 1}: ${teamLabel} - ${action} (${step.mode})`;
       }
 
@@ -394,7 +394,7 @@
 
       function handleMapClick(map, step) {
         document.getElementById("mainPreview").src = map.url;
-
+      
         history.push({
           stepIndex: currentStepIndex,
           mapName: map.name,
@@ -406,9 +406,9 @@
           sidePicker: step.sidePicker
         });
         redoStack = [];
-
+      
         usedMaps.push(map.name);
-
+      
         if (step.type === "ban") {
           const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
           const banItem = document.createElement("div");
@@ -420,23 +420,60 @@
           target.appendChild(banItem);
         } else if (step.type === "pick") {
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
-          const side = step.sidePicker === "T1"
-            ? getTeamName("T1")
-            : getTeamName("T2");
-
           seriesSlot.innerHTML = `
             <img src="${map.url}" alt="${map.name}" />
             <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
-            <div class="side">Side: ${side} (chosen by ${getTeamName(step.sidePicker)})</div>
           `;
+      
+          // Show side selection buttons
+          const sidePickerTeam = getTeamName(step.sidePicker);
+          const sideDiv = document.createElement("div");
+          sideDiv.className = "side-select";
+          sideDiv.setAttribute("data-index", step.mapIndex);
+          sideDiv.innerHTML = `
+            <div style="margin-top: 6px;">
+              <label style="font-size: 0.8rem;">${sidePickerTeam}, pick side:</label><br/>
+              <button onclick="setSide('${step.mapIndex}', 'Blue')">${sidePickerTeam} as Blue</button>
+              <button onclick="setSide('${step.mapIndex}', 'Red')">${sidePickerTeam} as Red</button>
+            </div>
+          `;
+          seriesSlot.appendChild(sideDiv);
         }
-
+      
         currentStepIndex++;
         renderMapGrid();
         updateStepDisplay();
       }
 
+      function setSide(mapIndex, chosenSide) {
+        const slot = document.querySelector(`.series-slot[data-index="${mapIndex}"]`);
+        const sidePicker = currentFlow.find(s => s.type === "pick" && s.mapIndex == mapIndex)?.sidePicker;
+        const team1 = getTeamName("T1");
+        const team2 = getTeamName("T2");
+    
+        const sideTeam = chosenSide === "Blue"
+          ? (sidePicker === "T1" ? team1 : team2)
+          : (sidePicker === "T1" ? team2 : team1);
+        const otherTeam = chosenSide === "Blue"
+          ? (sidePicker === "T1" ? team2 : team1)
+          : (sidePicker === "T1" ? team1 : team2);
+    
+        const existingImg = slot.querySelector("img")?.outerHTML || "";
+        const mapName = slot.querySelector(".map-name")?.innerText || "";
+        const modeName = slot.querySelector(".mode")?.innerText || "";
+    
+        slot.innerHTML = `
+          ${existingImg}
+          <div class="map-name">${mapName}</div>
+          <div class="mode">${modeName}</div>
+          <div class="side">Blue: ${sideTeam} | Red: ${otherTeam}</div>
+        `;
+    
+        const selector = document.querySelector('.side-select[data-index="' + mapIndex + '"]');
+        if (selector) selector.remove();
+      }
+      
       function undoVeto() {
         if (history.length === 0) return;
         const last = history.pop();

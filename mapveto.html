@@ -10,7 +10,6 @@
       color: #fff;
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 0;
     }
     header {
       background: #222;
@@ -23,16 +22,15 @@
     .top-controls {
       display: flex;
       justify-content: space-around;
+      align-items: center;
       padding: 10px;
       background: #1a1a1a;
     }
     .team-box {
       text-align: center;
-      width: 45%;
     }
     .team-box input {
       font-size: 1.2rem;
-      width: 80%;
       text-align: center;
       background: transparent;
       color: #fff;
@@ -40,14 +38,11 @@
       border-bottom: 2px solid #555;
       padding: 5px;
     }
-    .format-select {
-      text-align: center;
-    }
-    .format-select select {
+    .format-select select,
+    .mode-select select {
       background: #222;
       color: #fff;
       padding: 5px 10px;
-      border: 1px solid #666;
       font-size: 1rem;
     }
     .veto-row {
@@ -64,6 +59,17 @@
       border: 2px solid red;
       border-radius: 5px;
       margin-top: 10px;
+    }
+    .ban-panel div.ban-slot {
+      height: 100px;
+      border: 2px dashed red;
+      border-radius: 5px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.9rem;
+      color: #999;
     }
     .map-preview {
       width: 60%;
@@ -82,6 +88,7 @@
       gap: 10px;
       padding: 20px;
       background: #000;
+      flex-wrap: wrap;
     }
     .series-slot {
       background: #1c1c1c;
@@ -129,6 +136,11 @@
       padding: 5px;
       text-align: center;
     }
+    .map-card.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+      filter: grayscale(80%);
+    }
   </style>
 </head>
 <body>
@@ -139,8 +151,18 @@
       <div><strong>Team 1 (Blue)</strong></div>
       <input id="team1Name" placeholder="Team 1 Name" />
     </div>
+
+    <div class="mode-select">
+      <label>Mode:</label><br>
+      <select id="modeSelect">
+        <option value="hardpoint" selected>Hardpoint</option>
+        <option value="snd">Search and Destroy</option>
+        <option value="control">Control</option>
+      </select>
+    </div>
+
     <div class="format-select">
-      <label for="format">Match Format:</label><br/>
+      <label>Match Format:</label><br>
       <select id="format">
         <option value="bo3">Best of 3</option>
         <option value="bo5" selected>Best of 5</option>
@@ -148,6 +170,7 @@
         <option value="gfbo7">Grand Finals BO7 + Advantage</option>
       </select>
     </div>
+
     <div class="team-box">
       <div><strong>Team 2 (Red)</strong></div>
       <input id="team2Name" placeholder="Team 2 Name" />
@@ -156,92 +179,123 @@
 
   <div class="veto-row">
     <div class="ban-panel" id="banLeft">
-      <div>BANNED MAPS</div>
-      <img src="https://i.imgur.com/XMmudAS.png" alt="ban1"/>
+      <div>BANS (BLUE)</div>
+      <div class="ban-slot" onclick="setBan('left')">Click to Ban</div>
     </div>
     <div class="map-preview">
       <img id="mainPreview" src="https://i.imgur.com/U4aFFoi.png" alt="map preview"/>
     </div>
     <div class="ban-panel" id="banRight">
-      <div>BANNED MAPS</div>
-      <img src="https://i.imgur.com/0zGGSqM.png" alt="ban2"/>
+      <div>BANS (RED)</div>
+      <div class="ban-slot" onclick="setBan('right')">Click to Ban</div>
     </div>
   </div>
 
-  <div class="series-row" id="seriesRow">
-    <div class="series-slot" data-index="0">Series 1<div class="side">Side: Blue</div></div>
-    <div class="series-slot" data-index="1">Series 2<div class="side">Side: Red</div></div>
-    <div class="series-slot" data-index="2">Series 3<div class="side">Side: Blue</div></div>
-    <div class="series-slot" data-index="3">Series 4<div class="side">Side: Red</div></div>
-    <div class="series-slot" data-index="4">Series 5<div class="side">Side: Blue</div></div>
-  </div>
-
-  <div class="map-grid" id="mapGrid">
-    <!-- Maps auto-injected below -->
-  </div>
+  <div class="series-row" id="seriesRow"></div>
+  <div class="map-grid" id="mapGrid"></div>
 
   <script>
-    const maps = [
-      { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
-      { name: "Apocalypse", url: "https://i.imgur.com/0zGGSqM.png" },
-      { name: "Hacienda", url: "https://i.imgur.com/u4ppFlW.png" },
-      { name: "Slums", url: "https://i.imgur.com/U4aFFoi.png" },
-      { name: "Combine", url: "https://i.imgur.com/zv4Ffz2.png" },
-      { name: "Tunisia", url: "https://i.imgur.com/bDsFBor.png" },
-      { name: "Firing Range", url: "https://i.imgur.com/NCxsY60.png" },
-      { name: "Kurohana Metropolis", url: "https://i.imgur.com/gichuj1.png" },
-      { name: "Standoff", url: "https://i.imgur.com/tT7ulSk.png" },
-      { name: "Coastal", url: "https://i.imgur.com/JStaBHR.png" },
-      { name: "Raid", url: "https://i.imgur.com/URdHUyt.png" },
-      { name: "Take Off", url: "https://i.imgur.com/krTgidC.png" },
-      { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
-    ];
+    const mapPools = {
+      hardpoint: [
+        { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
+        { name: "Apocalypse", url: "https://i.imgur.com/0zGGSqM.png" },
+        { name: "Hacienda", url: "https://i.imgur.com/u4ppFlW.png" },
+        { name: "Slums", url: "https://i.imgur.com/U4aFFoi.png" },
+        { name: "Combine", url: "https://i.imgur.com/zv4Ffz2.png" }
+      ],
+      snd: [
+        { name: "Tunisia", url: "https://i.imgur.com/bDsFBor.png" },
+        { name: "Firing Range", url: "https://i.imgur.com/NCxsY60.png" },
+        { name: "Kurohana Metropolis", url: "https://i.imgur.com/gichuj1.png" },
+        { name: "Standoff", url: "https://i.imgur.com/tT7ulSk.png" },
+        { name: "Coastal", url: "https://i.imgur.com/JStaBHR.png" }
+      ],
+      control: [
+        { name: "Raid", url: "https://i.imgur.com/URdHUyt.png" },
+        { name: "Take Off", url: "https://i.imgur.com/krTgidC.png" },
+        { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
+      ]
+    };
 
-    const grid = document.getElementById("mapGrid");
-    const preview = document.getElementById("mainPreview");
-    const seriesRow = document.getElementById("seriesRow").children;
+    let currentMode = 'hardpoint';
+    let selectedBans = { left: null, right: null };
+    let selectedMaps = [];
 
-    let currentSeries = 0;
+    function renderSeries() {
+      const container = document.getElementById('seriesRow');
+      const format = document.getElementById('format').value;
+      let count = format === 'bo3' ? 3 : (format === 'bo5' ? 5 : 7);
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const div = document.createElement('div');
+        div.className = 'series-slot';
+        div.setAttribute('data-index', i);
+        div.innerHTML = `Series ${i + 1}<div class="side">Side: ${i % 2 === 0 ? 'Blue' : 'Red'}</div>`;
+        container.appendChild(div);
+      }
+    }
 
-    function renderMaps() {
+    function renderMapGrid() {
+      const grid = document.getElementById('mapGrid');
       grid.innerHTML = '';
-      maps.forEach((map, index) => {
-        const card = document.createElement("div");
-        card.className = "map-card";
-        card.innerHTML = `
-          <img src="${map.url}" alt="${map.name}" />
-          <div>${map.name}</div>
-        `;
-        card.onclick = () => handleMapClick(map);
+      mapPools[currentMode].forEach(map => {
+        const isUsed = selectedMaps.includes(map.name) || Object.values(selectedBans).includes(map.name);
+        const card = document.createElement('div');
+        card.className = 'map-card' + (isUsed ? ' disabled' : '');
+        card.innerHTML = `<img src="${map.url}" /><div>${map.name}</div>`;
+        if (!isUsed) {
+          card.onclick = () => handleMapClick(map);
+        }
         grid.appendChild(card);
       });
     }
 
     function handleMapClick(map) {
+      const preview = document.getElementById('mainPreview');
       preview.src = map.url;
-      if (currentSeries < seriesRow.length) {
-        seriesRow[currentSeries].innerHTML = `${map.name}<div class="side">Side: ${currentSeries % 2 === 0 ? "Blue" : "Red"}</div>`;
-        currentSeries++;
+
+      const emptySlot = [...document.querySelectorAll('.series-slot')]
+        .find(el => !el.dataset.map);
+      if (emptySlot) {
+        emptySlot.dataset.map = map.name;
+        emptySlot.innerHTML = `${map.name}<div class="side">Side: ${emptySlot.querySelector('.side').textContent.split(':')[1].trim()}</div>`;
+        selectedMaps.push(map.name);
+        renderMapGrid();
       }
     }
 
-    document.getElementById("format").addEventListener("change", e => {
-      const val = e.target.value;
-      let total = val === "bo3" ? 3 : val === "bo5" ? 5 : 7;
-      if (val === "gfbo7") total = 7;
+    function setBan(team) {
+      const empty = document.querySelector(`#ban${team === 'left' ? 'Left' : 'Right'} .ban-slot`);
+      empty.textContent = 'Click a map to ban...';
+      [...document.querySelectorAll('.map-card')].forEach(card => {
+        if (!card.classList.contains('disabled')) {
+          card.onclick = () => {
+            const mapName = card.querySelector('div').textContent;
+            selectedBans[team] = mapName;
+            empty.innerHTML = mapName;
+            selectedMaps.push(mapName);
+            renderMapGrid();
+          };
+        }
+      });
+    }
 
-      document.getElementById("seriesRow").innerHTML = '';
-      for (let i = 0; i < total; i++) {
-        const slot = document.createElement("div");
-        slot.className = "series-slot";
-        slot.dataset.index = i;
-        slot.innerHTML = `Series ${i+1}<div class="side">Side: ${i % 2 === 0 ? "Blue" : "Red"}</div>`;
-        document.getElementById("seriesRow").appendChild(slot);
-      }
-      currentSeries = 0;
+    document.getElementById('modeSelect').addEventListener('change', (e) => {
+      currentMode = e.target.value;
+      selectedMaps = [];
+      selectedBans = { left: null, right: null };
+      document.querySelectorAll('.ban-slot').forEach(slot => slot.innerHTML = 'Click to Ban');
+      renderSeries();
+      renderMapGrid();
     });
 
-    renderMaps();
+    document.getElementById('format').addEventListener('change', () => {
+      renderSeries();
+      renderMapGrid();
+    });
+
+    renderSeries();
+    renderMapGrid();
   </script>
 </body>
 </html>

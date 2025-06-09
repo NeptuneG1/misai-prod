@@ -231,6 +231,14 @@
   <div class="series-row" id="seriesRow"></div>
   <div class="map-grid" id="mapGrid"></div>
 
+  <div id="sideOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:999; align-items:center; justify-content:center;">
+  <div style="background:#222; padding:20px; border-radius:10px; text-align:center; color:#fff; min-width:300px;">
+    <div id="sideOverlayText" style="margin-bottom:15px; font-size:1.2rem;">Which side does Team X choose?</div>
+    <button onclick="selectSide('Blue')" style="padding:10px 20px; margin:5px;">🔵 Blue</button>
+    <button onclick="selectSide('Red')" style="padding:10px 20px; margin:5px;">🔴 Red</button>
+  </div>
+</div>
+  
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const mapPools = {
@@ -419,12 +427,11 @@
           `;
           target.appendChild(banItem);
         } else if (step.type === "pick") {
-          const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
-          seriesSlot.innerHTML = `
-            <img src="${map.url}" alt="${map.name}" />
-            <div class="map-name">${map.name}</div>
-            <div class="mode">${step.mode}</div>
-          `;
+          pendingPick = { map, step }; // store temporarily
+          document.getElementById("sideOverlay").style.display = "flex";
+          const pickerName = getTeamName(step.sidePicker);
+          document.getElementById("sideOverlayText").textContent = `Which side does ${pickerName} choose?`;
+        }
       
           // Show side selection buttons
           const sidePickerTeam = getTeamName(step.sidePicker);
@@ -446,6 +453,44 @@
         updateStepDisplay();
       }
 
+      let pendingPick = null;
+
+      function selectSide(selectedSide) {
+        const { map, step } = pendingPick;
+        const slot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+        const pickerTeamName = getTeamName(step.sidePicker);
+        const opponentTeamName = getTeamName(step.sidePicker === "T1" ? "T2" : "T1");
+      
+        const blueTeam = selectedSide === "Blue" ? pickerTeamName : opponentTeamName;
+        const redTeam = selectedSide === "Red" ? pickerTeamName : opponentTeamName;
+      
+        slot.innerHTML = `
+          <img src="${map.url}" alt="${map.name}" />
+          <div class="map-name">${map.name}</div>
+          <div class="mode">${step.mode}</div>
+          <div class="side">🔵 ${blueTeam} vs 🔴 ${redTeam}</div>
+          <div style="font-size:0.7rem; color:#aaa;">Side chosen by ${pickerTeamName}</div>
+        `;
+      
+        history.push({
+          stepIndex: currentStepIndex,
+          mapName: map.name,
+          team: step.team,
+          type: step.type,
+          mode: step.mode,
+          mapIndex: step.mapIndex,
+          mapUrl: map.url,
+          sidePicker: step.sidePicker,
+          chosenSide: selectedSide
+        });
+      
+        usedMaps.push(map.name);
+        currentStepIndex++;
+        pendingPick = null;
+        document.getElementById("sideOverlay").style.display = "none";
+        renderMapGrid();
+        updateStepDisplay();
+      }
       function setSide(mapIndex, chosenSide) {
         const slot = document.querySelector(`.series-slot[data-index="${mapIndex}"]`);
         const sidePicker = currentFlow.find(s => s.type === "pick" && s.mapIndex == mapIndex)?.sidePicker;

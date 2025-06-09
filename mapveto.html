@@ -54,20 +54,21 @@
       width: 20%;
       text-align: center;
     }
-    .ban-panel img {
+    .ban-slot img {
       width: 100%;
+      height: auto;
       border: 2px solid red;
       border-radius: 5px;
       margin-top: 10px;
     }
-    .ban-panel div.ban-slot {
-      height: 100px;
+    .ban-slot {
+      cursor: pointer;
+      min-height: 100px;
       border: 2px dashed red;
-      border-radius: 5px;
-      margin-top: 10px;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      border-radius: 6px;
       font-size: 0.9rem;
       color: #999;
     }
@@ -93,14 +94,19 @@
     .series-slot {
       background: #1c1c1c;
       color: #ffd700;
-      width: 160px;
-      height: 100px;
+      width: 180px;
+      height: 120px;
       border: 2px solid #666;
       border-radius: 6px;
       text-align: center;
       font-weight: bold;
-      padding: 10px;
+      padding: 5px;
       position: relative;
+    }
+    .series-slot .mode {
+      font-size: 0.75rem;
+      color: #ccc;
+      margin-top: 4px;
     }
     .series-slot .side {
       position: absolute;
@@ -152,22 +158,12 @@
       <input id="team1Name" placeholder="Team 1 Name" />
     </div>
 
-    <div class="mode-select">
-      <label>Mode:</label><br>
-      <select id="modeSelect">
-        <option value="hardpoint" selected>Hardpoint</option>
-        <option value="snd">Search and Destroy</option>
-        <option value="control">Control</option>
-      </select>
-    </div>
-
     <div class="format-select">
       <label>Match Format:</label><br>
       <select id="format">
         <option value="bo3">Best of 3</option>
         <option value="bo5" selected>Best of 5</option>
         <option value="bo7">Best of 7</option>
-        <option value="gfbo7">Grand Finals BO7 + Advantage</option>
       </select>
     </div>
 
@@ -178,16 +174,16 @@
   </div>
 
   <div class="veto-row">
-    <div class="ban-panel" id="banLeft">
-      <div>BANS (BLUE)</div>
-      <div class="ban-slot" onclick="setBan('left')">Click to Ban</div>
+    <div class="ban-panel">
+      <div>BAN (BLUE)</div>
+      <div class="ban-slot" id="banLeft" onclick="setBan('left')">Click to Ban</div>
     </div>
     <div class="map-preview">
       <img id="mainPreview" src="https://i.imgur.com/U4aFFoi.png" alt="map preview"/>
     </div>
-    <div class="ban-panel" id="banRight">
-      <div>BANS (RED)</div>
-      <div class="ban-slot" onclick="setBan('right')">Click to Ban</div>
+    <div class="ban-panel">
+      <div>BAN (RED)</div>
+      <div class="ban-slot" id="banRight" onclick="setBan('right')">Click to Ban</div>
     </div>
   </div>
 
@@ -196,54 +192,66 @@
 
   <script>
     const mapPools = {
-      hardpoint: [
+      Hardpoint: [
         { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
         { name: "Apocalypse", url: "https://i.imgur.com/0zGGSqM.png" },
         { name: "Hacienda", url: "https://i.imgur.com/u4ppFlW.png" },
         { name: "Slums", url: "https://i.imgur.com/U4aFFoi.png" },
         { name: "Combine", url: "https://i.imgur.com/zv4Ffz2.png" }
       ],
-      snd: [
+      "Search and Destroy": [
         { name: "Tunisia", url: "https://i.imgur.com/bDsFBor.png" },
         { name: "Firing Range", url: "https://i.imgur.com/NCxsY60.png" },
         { name: "Kurohana Metropolis", url: "https://i.imgur.com/gichuj1.png" },
         { name: "Standoff", url: "https://i.imgur.com/tT7ulSk.png" },
         { name: "Coastal", url: "https://i.imgur.com/JStaBHR.png" }
       ],
-      control: [
+      Control: [
         { name: "Raid", url: "https://i.imgur.com/URdHUyt.png" },
         { name: "Take Off", url: "https://i.imgur.com/krTgidC.png" },
         { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
       ]
     };
 
-    let currentMode = 'hardpoint';
-    let selectedBans = { left: null, right: null };
+    const formatMapOrder = {
+      bo3: ["Hardpoint", "Search and Destroy", "Control"],
+      bo5: ["Hardpoint", "Search and Destroy", "Control", "Hardpoint", "Search and Destroy"],
+      bo7: ["Hardpoint", "Search and Destroy", "Control", "Hardpoint", "Search and Destroy", "Control", "Search and Destroy"]
+    };
+
     let selectedMaps = [];
+    let selectedBans = { left: null, right: null };
+    let banningTeam = null;
 
     function renderSeries() {
-      const container = document.getElementById('seriesRow');
       const format = document.getElementById('format').value;
-      let count = format === 'bo3' ? 3 : (format === 'bo5' ? 5 : 7);
+      const order = formatMapOrder[format];
+      const container = document.getElementById('seriesRow');
       container.innerHTML = '';
-      for (let i = 0; i < count; i++) {
+      order.forEach((mode, i) => {
         const div = document.createElement('div');
         div.className = 'series-slot';
         div.setAttribute('data-index', i);
-        div.innerHTML = `Series ${i + 1}<div class="side">Side: ${i % 2 === 0 ? 'Blue' : 'Red'}</div>`;
+        div.setAttribute('data-mode', mode);
+        div.innerHTML = `Series ${i+1}<div class="mode">${mode}</div><div class="side">Side: ${i % 2 === 0 ? "Blue" : "Red"}</div>`;
         container.appendChild(div);
-      }
+      });
+    }
+
+    function getAllAvailableMaps() {
+      return Object.values(mapPools).flat();
     }
 
     function renderMapGrid() {
       const grid = document.getElementById('mapGrid');
+      const used = new Set([...selectedMaps, ...Object.values(selectedBans)]);
       grid.innerHTML = '';
-      mapPools[currentMode].forEach(map => {
-        const isUsed = selectedMaps.includes(map.name) || Object.values(selectedBans).includes(map.name);
+      getAllAvailableMaps().forEach(map => {
+        const disabled = used.has(map.name);
         const card = document.createElement('div');
-        card.className = 'map-card' + (isUsed ? ' disabled' : '');
-        card.innerHTML = `<img src="${map.url}" /><div>${map.name}</div>`;
-        if (!isUsed) {
+        card.className = 'map-card' + (disabled ? ' disabled' : '');
+        card.innerHTML = `<img src="${map.url}"/><div>${map.name}</div>`;
+        if (!disabled) {
           card.onclick = () => handleMapClick(map);
         }
         grid.appendChild(card);
@@ -251,45 +259,39 @@
     }
 
     function handleMapClick(map) {
-      const preview = document.getElementById('mainPreview');
-      preview.src = map.url;
+      document.getElementById('mainPreview').src = map.url;
 
-      const emptySlot = [...document.querySelectorAll('.series-slot')]
-        .find(el => !el.dataset.map);
-      if (emptySlot) {
-        emptySlot.dataset.map = map.name;
-        emptySlot.innerHTML = `${map.name}<div class="side">Side: ${emptySlot.querySelector('.side').textContent.split(':')[1].trim()}</div>`;
+      if (banningTeam) {
+        selectedBans[banningTeam] = map.name;
+        const slot = document.getElementById('ban' + (banningTeam === 'left' ? 'Left' : 'Right'));
+        slot.innerHTML = `<img src="${map.url}" alt="${map.name}"/>`;
+        banningTeam = null;
+        renderMapGrid();
+        return;
+      }
+
+      const slot = [...document.querySelectorAll('.series-slot')].find(slot => !slot.dataset.map);
+      if (slot) {
+        const mode = slot.dataset.mode;
+        if (!mapPools[mode].some(m => m.name === map.name)) return; // block wrong mode
+        slot.innerHTML = `${map.name}<div class="mode">${mode}</div><div class="side">Side: ${slot.querySelector('.side').textContent.split(":")[1]}</div>`;
+        slot.dataset.map = map.name;
         selectedMaps.push(map.name);
         renderMapGrid();
       }
     }
 
     function setBan(team) {
-      const empty = document.querySelector(`#ban${team === 'left' ? 'Left' : 'Right'} .ban-slot`);
-      empty.textContent = 'Click a map to ban...';
-      [...document.querySelectorAll('.map-card')].forEach(card => {
-        if (!card.classList.contains('disabled')) {
-          card.onclick = () => {
-            const mapName = card.querySelector('div').textContent;
-            selectedBans[team] = mapName;
-            empty.innerHTML = mapName;
-            selectedMaps.push(mapName);
-            renderMapGrid();
-          };
-        }
-      });
+      banningTeam = team;
+      alert(`Click a map to ban for Team ${team === 'left' ? 'Blue' : 'Red'}`);
     }
 
-    document.getElementById('modeSelect').addEventListener('change', (e) => {
-      currentMode = e.target.value;
+    document.getElementById('format').addEventListener('change', () => {
       selectedMaps = [];
       selectedBans = { left: null, right: null };
-      document.querySelectorAll('.ban-slot').forEach(slot => slot.innerHTML = 'Click to Ban');
-      renderSeries();
-      renderMapGrid();
-    });
-
-    document.getElementById('format').addEventListener('change', () => {
+      banningTeam = null;
+      document.getElementById('banLeft').innerHTML = 'Click to Ban';
+      document.getElementById('banRight').innerHTML = 'Click to Ban';
       renderSeries();
       renderMapGrid();
     });

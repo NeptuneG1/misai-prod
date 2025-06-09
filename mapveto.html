@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CODM Map Veto</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #ffd700;
+    }
+    .mode-section {
+      margin-bottom: 30px;
+    }
+    .map-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .map-card {
+      background: #1e1e1e;
+      border: 2px solid #444;
+      border-radius: 8px;
+      width: 180px;
+      padding: 5px;
+      text-align: center;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .map-card:hover {
+      transform: scale(1.03);
+      border-color: #00bfff;
+    }
+    .map-card img {
+      width: 100%;
+      border-radius: 5px;
+    }
+    .veto-actions {
+      margin-top: 5px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <h1>CODM Map Veto UI</h1>
+
+  <div class="mode-section">
+    <h2>Hardpoint</h2>
+    <div class="map-grid">
+      <div class="map-card"><img src="https://i.imgur.com/XMmudAS.png" alt="Summit"/><div>Summit</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/0zGGSqM.png" alt="Apocalypse"/><div>Apocalypse</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/u4ppFlW.png" alt="Hacienda"/><div>Hacienda</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/U4aFFoi.png" alt="Slums"/><div>Slums</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/zv4Ffz2.png" alt="Combine"/><div>Combine</div></div>
+    </div>
+  </div>
+
+  <div class="mode-section">
+    <h2>Search and Destroy</h2>
+    <div class="map-grid">
+      <div class="map-card"><img src="https://i.imgur.com/bDsFBor.png" alt="Tunisia"/><div>Tunisia</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/NCxsY60.png" alt="Firing Range"/><div>Firing Range</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/gichuj1.png" alt="Kurohana Metropolis"/><div>Kurohana Metropolis</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/tT7ulSk.png" alt="Standoff"/><div>Standoff</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/JStaBHR.png" alt="Coastal"/><div>Coastal</div></div>
+    </div>
+  </div>
+
+  <div class="mode-section">
+    <h2>Control</h2>
+    <div class="map-grid">
+      <div class="map-card"><img src="https://i.imgur.com/URdHUyt.png" alt="Raid"/><div>Raid</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/krTgidC.png" alt="Take Off"/><div>Take Off</div></div>
+      <div class="map-card"><img src="https://i.imgur.com/TjMmMNJ.png" alt="Crossfire"/><div>Crossfire</div></div>
+    </div>
+  </div>
+
+  <div class="mode-section">
+    <h2>Veto Formats</h2>
+    <p>Select a format to begin the veto process:</p>
+    <ul>
+      <li><strong>BO3</strong>: 2 bans each for HP and SnD, 1 ban each for Control, 1 map left per mode</li>
+      <li><strong>BO5</strong>: 1 ban and 1 pick each for HP/SnD, 1 ban each for Control</li>
+      <li><strong>BO7</strong>: 1 ban and 1 pick each for HP/SnD, 1 pick each for Control, 1 SnD map left</li>
+      <li><strong>GF BO7 w/Adv</strong>: Same as BO7, Control picks flipped</li>
+    </ul>
+  </div>
+</body>
+</html>

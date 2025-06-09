@@ -181,74 +181,58 @@
       gap: 10px;
       padding: 20px 10px;
     }
-
   </style>
 </head>
-  <body>
-    <header>CODM MAP VETO</header>
-  
-    <div class="top-controls">
-      <div class="team-box">
-        <div><strong>Team 1 (Blue)</strong></div>
-        <input id="team1Name" placeholder="Team 1 Name" />
-      </div>
-  
-      <div class="format-select">
-        <label>Match Format:</label><br />
-        <select id="formatSelect">
-          <option value="bo3">Best of 3</option>
-          <option value="bo5" selected>Best of 5</option>
-          <option value="bo7">Best of 7</option>
-          <option value="gfbo7">Grand Finals BO7</option>
-        </select>
-      </div>
-  
-      <div class="team-box">
-        <div><strong>Team 2 (Red)</strong></div>
-        <input id="team2Name" placeholder="Team 2 Name" />
-      </div>
+<body>
+  <header>CODM MAP VETO</header>
+
+  <div class="top-controls">
+    <div class="team-box">
+      <div><strong>Team 1 (Blue)</strong></div>
+      <input id="team1Name" placeholder="Team 1 Name" />
     </div>
-  
-      <div class="current-step" id="stepDisplay">Step: Team 1 - Ban (Hardpoint)</div>
-
-    <div style="text-align: center; margin: 10px;">
-      <button onclick="undoVeto()" style="padding: 8px 12px; font-size: 1rem; margin: 0 6px; background: #ffaa00; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        ↩️ Undo
-      </button>
-      <button onclick="redoVeto()" style="padding: 8px 12px; font-size: 1rem; margin: 0 6px; background: #00c853; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        ↪️ Redo
-      </button>
-      <button onclick="resetVeto()" style="padding: 8px 12px; font-size: 1rem; margin: 0 6px; background: #ff5555; color: white; border: none; border-radius: 6px; cursor: pointer;">
-        🔁 Reset
-      </button>
+    <div class="format-select">
+      <label>Match Format:</label><br />
+      <select id="formatSelect">
+        <option value="bo3">Best of 3</option>
+        <option value="bo5" selected>Best of 5</option>
+        <option value="bo7">Best of 7</option>
+        <option value="gfbo7">Grand Finals BO7</option>
+      </select>
     </div>
-
-    <div class="veto-row">
-      <div class="ban-panel">
-        <div>BANS (BLUE)</div>
-        <div id="banLeft" class="ban-thumbs"></div>
-      </div>
-      <div class="map-preview">
-        <img id="mainPreview" src="https://i.imgur.com/HvwSkri.png" alt="map preview" />
-      </div>
-      <div class="ban-panel">
-        <div>BANS (RED)</div>
-        <div id="banRight" class="ban-thumbs"></div>
-      </div>
+    <div class="team-box">
+      <div><strong>Team 2 (Red)</strong></div>
+      <input id="team2Name" placeholder="Team 2 Name" />
     </div>
-  
-    <div class="series-row" id="seriesRow"></div>
-    <div class="map-grid" id="mapGrid"></div>
+  </div>
 
-    <script>
+  <div class="current-step" id="stepDisplay">Step: Team 1 - Ban (Hardpoint)</div>
 
-      let usedMaps = [];
-      let currentStepIndex = 0;
-      let currentFlow = vetoFlows.bo5;
-      
-      const history = [];
-      let redoStack = [];
+  <div style="text-align: center; margin: 10px;">
+    <button onclick="undoVeto()" style="padding:8px 12px;">↩️ Undo</button>
+    <button onclick="redoVeto()" style="padding:8px 12px;">↪️ Redo</button>
+    <button onclick="resetVeto()" style="padding:8px 12px;">🔁 Reset</button>
+  </div>
 
+  <div class="veto-row">
+    <div class="ban-panel">
+      <div>BANS (BLUE)</div>
+      <div id="banLeft" class="ban-thumbs"></div>
+    </div>
+    <div class="map-preview">
+      <img id="mainPreview" src="https://i.imgur.com/HvwSkri.png" alt="map preview" />
+    </div>
+    <div class="ban-panel">
+      <div>BANS (RED)</div>
+      <div id="banRight" class="ban-thumbs"></div>
+    </div>
+  </div>
+
+  <div class="series-row" id="seriesRow"></div>
+  <div class="map-grid" id="mapGrid"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
       const mapPools = {
         Hardpoint: [
           { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
@@ -270,8 +254,8 @@
           { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
         ]
       };
-      
-     const vetoFlows = {
+
+      const vetoFlows = {
         bo3: [
           { type: "ban", team: "T1", mode: "Hardpoint" },
           { type: "ban", team: "T2", mode: "Hardpoint" },
@@ -326,11 +310,13 @@
           { type: "pick", team: "T2", mode: "Control", mapIndex: 5, sidePicker: "T1" }
         ]
       };
-      
+
       let usedMaps = [];
       let currentStepIndex = 0;
       let currentFlow = vetoFlows.bo5;
-      
+      const history = [];
+      let redoStack = [];
+
       document.getElementById("formatSelect").addEventListener("change", () => {
         currentStepIndex = 0;
         usedMaps = [];
@@ -341,7 +327,7 @@
         renderMapGrid();
         updateStepDisplay();
       });
-      
+
       function getTeamName(code) {
         const t1 = document.getElementById("team1Name").value || "Team 1";
         const t2 = document.getElementById("team2Name").value || "Team 2";
@@ -358,22 +344,20 @@
         const teamLabel = step.team === "T1" ? "Team 1 (Blue)" : "Team 2 (Red)";
         document.getElementById("stepDisplay").textContent = `Step ${currentStepIndex + 1}: ${teamLabel} - ${action} (${step.mode})`;
       }
-      
+
       function renderSeries() {
         const row = document.getElementById("seriesRow");
         row.innerHTML = "";
-      
         const picks = currentFlow.filter(s => s.type === "pick");
         const maxIndex = Math.max(...picks.map(s => s.mapIndex));
-      
-        const team1Name = document.getElementById("team1Name").value || "Team 1";
-        const team2Name = document.getElementById("team2Name").value || "Team 2";
-      
+        const team1Name = getTeamName("T1");
+        const team2Name = getTeamName("T2");
+
         for (let i = 0; i <= maxIndex; i++) {
           const pick = picks.find(p => p.mapIndex === i);
           const sideTeam = pick?.sidePicker === "T1" ? team1Name : team2Name;
           const mode = pick?.mode || "...";
-      
+
           const div = document.createElement("div");
           div.className = "series-slot";
           div.setAttribute("data-index", i);
@@ -385,13 +369,13 @@
           row.appendChild(div);
         }
       }
-      
+
       function renderMapGrid() {
         const grid = document.getElementById("mapGrid");
         const step = currentFlow[currentStepIndex];
         grid.innerHTML = "";
         if (!step) return;
-      
+
         mapPools[step.mode].forEach(map => {
           const isUsed = usedMaps.includes(map.name);
           const card = document.createElement("div");
@@ -403,11 +387,10 @@
           grid.appendChild(card);
         });
       }
-      
+
       function handleMapClick(map, step) {
         document.getElementById("mainPreview").src = map.url;
-      
-        // Record step in history
+
         history.push({
           stepIndex: currentStepIndex,
           mapName: map.name,
@@ -419,14 +402,11 @@
           sidePicker: step.sidePicker
         });
         redoStack = [];
-      
+
         usedMaps.push(map.name);
-      
+
         if (step.type === "ban") {
-          const target = step.team === "T1"
-            ? document.getElementById("banLeft")
-            : document.getElementById("banRight");
-      
+          const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
           const banItem = document.createElement("div");
           banItem.className = "ban-item";
           banItem.innerHTML = `
@@ -434,13 +414,12 @@
             <div class="label">${step.mode}<br>${map.name}</div>
           `;
           target.appendChild(banItem);
-      
         } else if (step.type === "pick") {
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
           const side = step.sidePicker === "T1"
-            ? (document.getElementById("team1Name").value || "Team 1")
-            : (document.getElementById("team2Name").value || "Team 2");
-      
+            ? getTeamName("T1")
+            : getTeamName("T2");
+
           seriesSlot.innerHTML = `
             <img src="${map.url}" alt="${map.name}" />
             <div class="map-name">${map.name}</div>
@@ -448,7 +427,7 @@
             <div class="side">Side: ${side} (chosen by ${getTeamName(step.sidePicker)})</div>
           `;
         }
-      
+
         currentStepIndex++;
         renderMapGrid();
         updateStepDisplay();
@@ -467,7 +446,7 @@
         document.getElementById("banRight").innerHTML = "";
         history.forEach(h => applyStepFromHistory(h));
       }
-      
+
       function redoVeto() {
         if (redoStack.length === 0) return;
         const next = redoStack.pop();
@@ -478,7 +457,7 @@
         renderMapGrid();
         updateStepDisplay();
       }
-      
+
       function applyStepFromHistory(step) {
         if (step.type === "ban") {
           const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
@@ -490,23 +469,24 @@
           `;
           target.appendChild(banItem);
         } else if (step.type === "pick") {
-          const teamName = step.team === "T1"
-            ? (document.getElementById("team1Name").value || "Team 1")
-            : (document.getElementById("team2Name").value || "Team 2");
+          const teamName = getTeamName(step.team);
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          const side = step.sidePicker === "T1" ? getTeamName("T1") : getTeamName("T2");
+
           seriesSlot.innerHTML = `
             <img src="${step.mapUrl}" alt="${step.mapName}" />
             <div class="map-name">${step.mapName}</div>
             <div class="mode">${step.mode}</div>
-            <div class="side">Picked by ${teamName}</div>
+            <div class="side">Side: ${side} (chosen by ${getTeamName(step.sidePicker)})</div>
           `;
         }
       }
 
-      
       renderSeries();
       renderMapGrid();
       updateStepDisplay();
-      </script>
-    </body>
-  </html>
+    });
+  </script>
+</body>
+</html>
+

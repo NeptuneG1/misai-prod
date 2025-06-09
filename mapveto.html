@@ -67,41 +67,36 @@
     .ban-thumbs {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 8px;
+      gap: 10px;
+      margin-top: 10px;
       justify-content: center;
+    }
+    .ban-thumbs .ban-item {
+      width: 120px;
+      background: #1c1c1c;
+      border-radius: 5px;
+      overflow: hidden;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #fff;
     }
     .ban-thumbs img {
-      width: 80px;
-      height: 60px;
+      width: 120px;
+      height: 90px;
       object-fit: cover;
-      border: 2px solid red;
-      border-radius: 4px;
+      border-bottom: 1px solid #333;
     }
-    .map-preview {
-      width: 60%;
-      text-align: center;
+    .ban-thumbs .label {
+      padding: 4px 6px;
+      font-size: 0.7rem;
+      background: #222;
+      border-top: 1px solid #000;
     }
-    .map-preview img {
-      width: 100%;
-      max-height: 400px;
-      object-fit: cover;
-      border-radius: 10px;
-      border: 3px solid #444;
-    }
-    .series-row {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      padding: 20px;
-      background: #000;
-      flex-wrap: wrap;
-    }
+    
     .series-slot {
       background: #1c1c1c;
       color: #ffd700;
       width: 180px;
-      height: auto;
       border: 2px solid #666;
       border-radius: 6px;
       text-align: center;
@@ -115,17 +110,21 @@
       object-fit: cover;
       border-radius: 4px;
     }
+    .series-slot .map-name {
+      margin-top: 5px;
+      font-size: 0.9rem;
+      color: #fff;
+    }
     .series-slot .mode {
       font-size: 0.75rem;
       color: #ccc;
-      margin-top: 4px;
+      margin-top: 2px;
     }
     .series-slot .side {
-      position: absolute;
-      bottom: 5px;
-      width: 100%;
-      font-size: 0.8rem;
-      color: #ccc;
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 2px;
+      margin-bottom: 5px;
     }
     .map-grid {
       display: flex;
@@ -348,15 +347,20 @@
       
         if (step.type === "ban") {
           const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
-          const img = document.createElement("img");
-          img.src = map.url;
-          img.alt = map.name;
-          target.appendChild(img);
-        } else if (step.type === "pick") {
+          const banItem = document.createElement("div");
+          banItem.className = "ban-item";
+          banItem.innerHTML = `
+            <img src="${map.url}" alt="${map.name}" />
+            <div class="label">${step.mode}<br>${map.name}</div>
+          `;
+          target.appendChild(banItem);
+        }
+      
+        else if (step.type === "pick") {
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
           seriesSlot.innerHTML = `
             <img src="${map.url}" alt="${map.name}" />
-            ${map.name}
+            <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
             <div class="side">Picked by ${step.team}</div>
           `;

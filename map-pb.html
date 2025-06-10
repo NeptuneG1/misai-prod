@@ -461,6 +461,11 @@
           ? `Blue: ${sidePickingTeam} | Red: ${pickingTeam}`
           : `Red: ${sidePickingTeam} | Blue: ${pickingTeam}`;
       
+        const historyItem = history.find(h => h.mapIndex == mapIndex && h.type === "pick");
+        if (historyItem) {
+          historyItem.side = sideAssignment;
+        }
+      
         const img = slot.querySelector("img")?.outerHTML || "";
         const mapName = slot.querySelector(".map-name")?.innerText || "";
         const mode = slot.querySelector(".mode")?.innerText || "";
@@ -499,6 +504,20 @@
         renderMapGrid();
         updateStepDisplay();
       }
+
+      function resetVeto() {
+        currentStepIndex = 0;
+        usedMaps = [];
+        history.length = 0;
+        redoStack.length = 0;
+        document.getElementById("banLeft").innerHTML = "";
+        document.getElementById("banRight").innerHTML = "";
+        renderSeries();
+        renderMapGrid();
+        updateStepDisplay();
+        document.getElementById("mainPreview").src = "https://i.imgur.com/HvwSkri.png";
+      }
+
       function applyStepFromHistory(step) {
         if (step.type === "ban") {
           const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
@@ -511,10 +530,24 @@
           target.appendChild(banItem);
         } else if (step.type === "pick") {
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          const pickingTeam = getTeamName(step.team);
+          const sidePickingTeam = step.team === "T1" ? getTeamName("T2") : getTeamName("T1");
+        
           seriesSlot.innerHTML = `
             <img src="${step.mapUrl}" alt="${step.mapName}" />
             <div class="map-name">${step.mapName}</div>
             <div class="mode">${step.mode}</div>
+            <div class="picked-by">Picked by ${pickingTeam}</div>
+            ${step.side ? `<div class="side">${step.side}</div>` : `
+              <div class="side-select" data-index="${step.mapIndex}" style="margin-top: 5px;">
+                <label style="font-size: 0.75rem;">${sidePickingTeam}, choose side:</label>
+                <select onchange="handleSideSelect('${step.mapIndex}', '${step.team}', this.value)">
+                  <option value="" disabled selected>Select side</option>
+                  <option value="Blue">Blue</option>
+                  <option value="Red">Red</option>
+                </select>
+              </div>
+            `}
           `;
         }
       }

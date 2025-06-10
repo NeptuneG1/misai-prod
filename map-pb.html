@@ -178,6 +178,19 @@
       color: #00bfff;
       margin-top: 3px;
     }
+    .series-slot select {
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+    .series-slot select:focus {
+      outline: none;
+      border-color: #00bfff;
+    }
     #seriesRow {
       display: flex;
       flex-wrap: wrap;
@@ -421,12 +434,46 @@
             <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
             <div class="picked-by">Picked by ${teamPicked}</div>
+            <div class="side-select" data-index="${step.mapIndex}" style="margin-top: 5px;">
+              <label style="font-size: 0.75rem;">${teamPicked}, choose side:</label>
+              <select onchange="handleSideSelect('${step.mapIndex}', this.value)">
+                <option value="" disabled selected>Select side</option>
+                <option value="Blue">Blue</option>
+                <option value="Red">Red</option>
+              </select>
+            </div>
           `;
         }
 
         currentStepIndex++;
         renderMapGrid();
         updateStepDisplay();
+      }
+
+      function handleSideSelect(mapIndex, chosenSide) {
+        const slot = document.querySelector(`.series-slot[data-index="${mapIndex}"]`);
+        const step = currentFlow.find(s => s.type === "pick" && s.mapIndex == mapIndex);
+        if (!step) return;
+      
+        const teamPicked = getTeamName(step.team);
+        const otherTeam = step.team === "T1" ? getTeamName("T2") : getTeamName("T1");
+      
+        const sideAssignment = chosenSide === "Blue"
+          ? `Blue: ${teamPicked} | Red: ${otherTeam}`
+          : `Red: ${teamPicked} | Blue: ${otherTeam}`;
+      
+        const img = slot.querySelector("img")?.outerHTML || "";
+        const mapName = slot.querySelector(".map-name")?.innerText || "";
+        const mode = slot.querySelector(".mode")?.innerText || "";
+        const pickedBy = slot.querySelector(".picked-by")?.outerHTML || "";
+      
+        slot.innerHTML = `
+          ${img}
+          <div class="map-name">${mapName}</div>
+          <div class="mode">${mode}</div>
+          ${pickedBy}
+          <div class="side">${sideAssignment}</div>
+        `;
       }
 
       function undoVeto() {

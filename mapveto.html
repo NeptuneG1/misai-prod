@@ -93,7 +93,6 @@
       background: #222;
       border-top: 1px solid #000;
     }
-    
     .series-slot {
       background: #1c1c1c;
       color: #ffd700;
@@ -174,6 +173,24 @@
       border-radius: 10px;
       border: 3px solid #444;
     }
+    .series-slot .picked-by {
+      font-size: 0.75rem;
+      color: #00bfff;
+      margin-top: 3px;
+    }
+    .series-slot select {
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+    .series-slot select:focus {
+      outline: none;
+      border-color: #00bfff;
+    }
     #seriesRow {
       display: flex;
       flex-wrap: wrap;
@@ -197,6 +214,7 @@
         <option value="bo3" selected>Best of 3</option>
         <option value="bo5">Best of 5</option>
         <option value="bo7">Best of 7</option>
+        <option value="gfbo7">Grand Finals BO7</option>
       </select>
     </div>
     <div class="team-box">
@@ -206,12 +224,6 @@
   </div>
 
   <div class="current-step" id="stepDisplay">Step: Team 1 - Ban (Hardpoint)</div>
-
-  <div style="text-align: center; margin: 10px;">
-    <button onclick="undoVeto()" style="padding:8px 12px;">↩️ Undo</button>
-    <button onclick="redoVeto()" style="padding:8px 12px;">↪️ Redo</button>
-    <button onclick="resetVeto()" style="padding:8px 12px;">🔁 Reset</button>
-  </div>
 
   <div class="veto-row">
     <div class="ban-panel">
@@ -229,7 +241,6 @@
 
   <div class="series-row" id="seriesRow"></div>
   <div class="map-grid" id="mapGrid"></div>
-
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const mapPools = {
@@ -260,41 +271,53 @@
           { type: "ban", team: "T2", mode: "Hardpoint" },
           { type: "ban", team: "T1", mode: "Hardpoint" },
           { type: "ban", team: "T2", mode: "Hardpoint" },
-          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T1" },
+          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0 },
           { type: "ban", team: "T2", mode: "Search and Destroy" },
           { type: "ban", team: "T1", mode: "Search and Destroy" },
           { type: "ban", team: "T2", mode: "Search and Destroy" },
           { type: "ban", team: "T1", mode: "Search and Destroy" },
-          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T2" },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1 },
           { type: "ban", team: "T1", mode: "Control" },
           { type: "ban", team: "T2", mode: "Control" },
-          { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" }
+          { type: "pick", team: "T1", mode: "Control", mapIndex: 2 }
         ],
         bo5: [
           { type: "ban", team: "T1", mode: "Hardpoint" },
           { type: "ban", team: "T2", mode: "Hardpoint" },
-          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
-          { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
+          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0 },
+          { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3 },
           { type: "ban", team: "T2", mode: "Search and Destroy" },
           { type: "ban", team: "T1", mode: "Search and Destroy" },
-          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
-          { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4, sidePicker: "T2" },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1 },
+          { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4 },
           { type: "ban", team: "T1", mode: "Control" },
           { type: "ban", team: "T2", mode: "Control" },
-          { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" }
+          { type: "pick", team: "T1", mode: "Control", mapIndex: 2 }
         ],
         bo7: [
           { type: "ban", team: "T1", mode: "Hardpoint" },
           { type: "ban", team: "T2", mode: "Hardpoint" },
-          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
-          { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
+          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0 },
+          { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3 },
           { type: "ban", team: "T2", mode: "Search and Destroy" },
           { type: "ban", team: "T1", mode: "Search and Destroy" },
-          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
-          { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4, sidePicker: "T2" },
-          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 6, sidePicker: "T2" },
-          { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T2" },
-          { type: "pick", team: "T2", mode: "Control", mapIndex: 5, sidePicker: "T1" }
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1 },
+          { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4 },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 6 },
+          { type: "pick", team: "T1", mode: "Control", mapIndex: 2 },
+          { type: "pick", team: "T2", mode: "Control", mapIndex: 5 }
+        ],
+        gfbo7: [
+          { type: "ban", team: "T1", mode: "Hardpoint" },
+          { type: "ban", team: "T2", mode: "Hardpoint" },
+          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0 },
+          { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3 },
+          { type: "ban", team: "T2", mode: "Search and Destroy" },
+          { type: "ban", team: "T1", mode: "Search and Destroy" },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1 },
+          { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 6 },
+          { type: "pick", team: "T1", mode: "Control", mapIndex: 2 },
+          { type: "pick", team: "T2", mode: "Control", mapIndex: 5 }
         ]
       };
 
@@ -303,7 +326,6 @@
       let currentFlow = vetoFlows.bo5;
       const history = [];
       let redoStack = [];
-
       document.getElementById("formatSelect").addEventListener("change", () => {
         currentStepIndex = 0;
         usedMaps = [];
@@ -328,34 +350,27 @@
           return;
         }
         const action = step.type === "ban" ? "Ban" : "Pick";
-        const teamLabel = step.team === "T1" ? "Team 1" : "Team 2";
+        const teamLabel = getTeamName(step.team);
         document.getElementById("stepDisplay").textContent = `Step ${currentStepIndex + 1}: ${teamLabel} - ${action} (${step.mode})`;
       }
 
       function renderSeries() {
         const row = document.getElementById("seriesRow");
         row.innerHTML = "";
-      
+
         const picks = currentFlow.filter(s => s.type === "pick");
         const maxIndex = Math.max(...picks.map(s => s.mapIndex), 0);
-      
-        const team1Name = getTeamName("T1");
-        const team2Name = getTeamName("T2");
-      
+
         for (let i = 0; i <= maxIndex; i++) {
           const pick = picks.find(p => p.mapIndex === i);
           const mode = pick?.mode || "...";
-          const sideTeam = pick?.sidePicker
-            ? `${pick.sidePicker === "T1" ? team1Name : team2Name} (chooses side)`
-            : "TBD";
-      
+
           const div = document.createElement("div");
           div.className = "series-slot";
           div.setAttribute("data-index", i);
           div.innerHTML = `
             Map ${i + 1}
             <div class="mode">${mode}</div>
-            <div class="side">Side: ${sideTeam}</div>
           `;
           row.appendChild(div);
         }
@@ -378,10 +393,9 @@
           grid.appendChild(card);
         });
       }
-
       function handleMapClick(map, step) {
         document.getElementById("mainPreview").src = map.url;
-      
+
         history.push({
           stepIndex: currentStepIndex,
           mapName: map.name,
@@ -393,9 +407,9 @@
           sidePicker: step.sidePicker
         });
         redoStack = [];
-      
+
         usedMaps.push(map.name);
-      
+
         if (step.type === "ban") {
           const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
           const banItem = document.createElement("div");
@@ -407,67 +421,59 @@
           target.appendChild(banItem);
         } else if (step.type === "pick") {
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          const teamPicked = getTeamName(step.team);
+
+          const pickingTeam = getTeamName(step.team);
+          const sidePickingTeam = step.team === "T1" ? getTeamName("T2") : getTeamName("T1");
           seriesSlot.innerHTML = `
             <img src="${map.url}" alt="${map.name}" />
             <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
-          `;
-      
-          // Show side selection buttons
-          const sidePickerTeam = getTeamName(step.sidePicker);
-          const sideDiv = document.createElement("div");
-          sideDiv.className = "side-select";
-          sideDiv.setAttribute("data-index", step.mapIndex);
-          sideDiv.innerHTML = `
-            <div style="margin-top: 6px;">
-              <label style="font-size: 0.8rem;">${sidePickerTeam}, pick side:</label><br/>
-              <button onclick="setSide('${step.mapIndex}', 'Blue')">${sidePickerTeam} as Blue</button>
-              <button onclick="setSide('${step.mapIndex}', 'Red')">${sidePickerTeam} as Red</button>
+            <div class="picked-by">Picked by ${pickingTeam}</div>
+            <div class="side-select" data-index="${step.mapIndex}" style="margin-top: 5px;">
+              <label style="font-size: 0.75rem;">${sidePickingTeam}, choose side:</label>
+              <select onchange="handleSideSelect('${step.mapIndex}', '${step.team}', this.value)">
+                <option value="" disabled selected>Select side</option>
+                <option value="Blue">Blue</option>
+                <option value="Red">Red</option>
+              </select>
             </div>
           `;
-          seriesSlot.appendChild(sideDiv);
         }
-      
+
         currentStepIndex++;
         renderMapGrid();
         updateStepDisplay();
       }
 
-      function setSide(mapIndex, chosenSide) {
+      function handleSideSelect(mapIndex, pickingTeamCode, chosenSide) {
         const slot = document.querySelector(`.series-slot[data-index="${mapIndex}"]`);
-        const sidePicker = currentFlow.find(s => s.type === "pick" && s.mapIndex == mapIndex)?.sidePicker;
-        const team1 = getTeamName("T1");
-        const team2 = getTeamName("T2");
-    
-        const sideTeam = chosenSide === "Blue"
-          ? (sidePicker === "T1" ? team1 : team2)
-          : (sidePicker === "T1" ? team2 : team1);
-        const otherTeam = chosenSide === "Blue"
-          ? (sidePicker === "T1" ? team2 : team1)
-          : (sidePicker === "T1" ? team1 : team2);
-    
-        const existingImg = slot.querySelector("img")?.outerHTML || "";
-        const mapName = slot.querySelector(".map-name")?.innerText || "";
-        const modeName = slot.querySelector(".mode")?.innerText || "";
-    
-        slot.innerHTML = `
-          ${existingImg}
-          <div class="map-name">${mapName}</div>
-          <div class="mode">${modeName}</div>
-          <div class="side">Blue: ${sideTeam} | Red: ${otherTeam}</div>
-        `;
-    
-        const selector = document.querySelector('.side-select[data-index="' + mapIndex + '"]');
-        if (selector) selector.remove();
-
-        // Update the stored step in history with side assignment
-        const index = history.findIndex(s => s.mapIndex == mapIndex && s.type === "pick");
-        if (index !== -1) {
-          history[index].blueTeam = sideTeam;
-          history[index].redTeam = otherTeam;
-        }
-      }
+        const pickingTeam = getTeamName(pickingTeamCode);
+        const sidePickingTeam = pickingTeamCode === "T1" ? getTeamName("T2") : getTeamName("T1");
       
+        const sideAssignment = chosenSide === "Blue"
+          ? `Blue: ${sidePickingTeam} | Red: ${pickingTeam}`
+          : `Red: ${sidePickingTeam} | Blue: ${pickingTeam}`;
+      
+        const historyItem = history.find(h => h.mapIndex == mapIndex && h.type === "pick");
+        if (historyItem) {
+          historyItem.side = sideAssignment;
+        }
+      
+        const img = slot.querySelector("img")?.outerHTML || "";
+        const mapName = slot.querySelector(".map-name")?.innerText || "";
+        const mode = slot.querySelector(".mode")?.innerText || "";
+        const pickedBy = slot.querySelector(".picked-by")?.outerHTML || "";
+      
+        slot.innerHTML = `
+          ${img}
+          <div class="map-name">${mapName}</div>
+          <div class="mode">${mode}</div>
+          ${pickedBy}
+          <div class="side">${sideAssignment}</div>
+        `;
+      }
+
       function undoVeto() {
         if (history.length === 0) return;
         const last = history.pop();
@@ -493,6 +499,19 @@
         updateStepDisplay();
       }
 
+      function resetVeto() {
+        currentStepIndex = 0;
+        usedMaps = [];
+        history.length = 0;
+        redoStack.length = 0;
+        document.getElementById("banLeft").innerHTML = "";
+        document.getElementById("banRight").innerHTML = "";
+        renderSeries();
+        renderMapGrid();
+        updateStepDisplay();
+        document.getElementById("mainPreview").src = "https://i.imgur.com/HvwSkri.png";
+      }
+
       function applyStepFromHistory(step) {
         if (step.type === "ban") {
           const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
@@ -504,26 +523,34 @@
           `;
           target.appendChild(banItem);
         } else if (step.type === "pick") {
-          const teamName = getTeamName(step.team);
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
-          const side = step.sidePicker === "T1" ? getTeamName("T1") : getTeamName("T2");
-
-          const blue = step.blueTeam || "Blue";
-          const red = step.redTeam || "Red";
-          
+          const pickingTeam = getTeamName(step.team);
+          const sidePickingTeam = step.team === "T1" ? getTeamName("T2") : getTeamName("T1");
+        
           seriesSlot.innerHTML = `
             <img src="${step.mapUrl}" alt="${step.mapName}" />
             <div class="map-name">${step.mapName}</div>
             <div class="mode">${step.mode}</div>
-            <div class="side">Blue: ${blue} | Red: ${red}</div>
+            <div class="picked-by">Picked by ${pickingTeam}</div>
+            ${step.side ? `<div class="side">${step.side}</div>` : `
+              <div class="side-select" data-index="${step.mapIndex}" style="margin-top: 5px;">
+                <label style="font-size: 0.75rem;">${sidePickingTeam}, choose side:</label>
+                <select onchange="handleSideSelect('${step.mapIndex}', '${step.team}', this.value)">
+                  <option value="" disabled selected>Select side</option>
+                  <option value="Blue">Blue</option>
+                  <option value="Red">Red</option>
+                </select>
+              </div>
+            `}
           `;
         }
       }
 
+      // Initial rendering on page load
       renderSeries();
       renderMapGrid();
       updateStepDisplay();
-    });
+   });
   </script>
 </body>
 </html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CODM Map Veto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+    }
+    header {
+      background: #222;
+      padding: 15px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border-bottom: 3px solid #444;
+    }
+    .top-controls {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 10px;
+      background: #1a1a1a;
+      flex-wrap: wrap;
+    }
+    .team-box {
+      text-align: center;
+    }
+    .team-box input {
+      font-size: 1.2rem;
+      text-align: center;
+      background: transparent;
+      color: #fff;
+      border: none;
+      border-bottom: 2px solid #555;
+      padding: 5px;
+    }
+    .format-select select {
+      background: #222;
+      color: #fff;
+      padding: 5px 10px;
+      font-size: 1rem;
+    }
+    .current-step {
+      background: #202020;
+      text-align: center;
+      padding: 10px;
+      font-size: 1.2rem;
+      color: #00bfff;
+      border-top: 2px solid #333;
+      border-bottom: 2px solid #333;
+    }
+    .veto-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 20px;
+      gap: 20px;
+    }
+    .ban-panel {
+      width: 20%;
+      text-align: center;
+    }
+    .ban-thumbs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+    .ban-thumbs .ban-item {
+      width: 120px;
+      background: #1c1c1c;
+      border-radius: 5px;
+      overflow: hidden;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #fff;
+    }
+    .ban-thumbs img {
+      width: 120px;
+      height: 90px;
+      object-fit: cover;
+      border-bottom: 1px solid #333;
+    }
+    .ban-thumbs .label {
+      padding: 4px 6px;
+      font-size: 0.7rem;
+      background: #222;
+      border-top: 1px solid #000;
+    }
+    
+    .series-slot {
+      background: #1c1c1c;
+      color: #ffd700;
+      width: 180px;
+      border: 2px solid #666;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: bold;
+      padding: 5px;
+      position: relative;
+    }
+    .series-slot img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .series-slot .map-name {
+      margin-top: 5px;
+      font-size: 0.9rem;
+      color: #fff;
+    }
+    .series-slot .mode {
+      font-size: 0.75rem;
+      color: #ccc;
+      margin-top: 2px;
+    }
+    .series-slot .side {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 2px;
+      margin-bottom: 5px;
+    }
+    .map-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
+    }
+    .map-card {
+      width: 180px;
+      background: #222;
+      border-radius: 8px;
+      border: 2px solid #444;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .map-card:hover {
+      transform: scale(1.05);
+      border-color: #00bfff;
+    }
+    .map-card img {
+      width: 100%;
+      border-radius: 8px 8px 0 0;
+    }
+    .map-card div {
+      padding: 5px;
+      text-align: center;
+    }
+    .map-card.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+      filter: grayscale(80%);
+    }
+    .map-preview {
+      width: 85%;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      max-height: 400px;
+    }    
+    .map-preview img {
+      max-width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 3px solid #444;
+    }
+    #seriesRow {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>CODM MAP VETO</header>
+
+  <div class="top-controls">
+    <div class="team-box">
+      <div><strong>Team 1</strong></div>
+      <input id="team1Name" placeholder="Team 1 Name" />
+    </div>
+    <div class="format-select">
+      <label>Match Format:</label><br />
+      <select id="formatSelect">
+        <option value="bo3">Best of 3</option>
+        <option value="bo5" selected>Best of 5</option>
+        <option value="bo7">Best of 7</option>
+        <option value="gfbo7">Grand Finals BO7</option>
+      </select>
+    </div>
+    <div class="team-box">
+      <div><strong>Team 2</strong></div>
+      <input id="team2Name" placeholder="Team 2 Name" />
+    </div>
+  </div>
+
+  <div class="current-step" id="stepDisplay">Step: Team 1 - Ban (Hardpoint)</div>
+
+  <div style="text-align: center; margin: 10px;">
+    <button onclick="undoVeto()" style="padding:8px 12px;">↩️ Undo</button>
+    <button onclick="redoVeto()" style="padding:8px 12px;">↪️ Redo</button>
+    <button onclick="resetVeto()" style="padding:8px 12px;">🔁 Reset</button>
+  </div>
+
+  <div class="veto-row">
+    <div class="ban-panel">
+      <div>BANS</div>
+      <div id="banLeft" class="ban-thumbs"></div>
+    </div>
+    <div class="map-preview">
+      <img id="mainPreview" src="https://i.imgur.com/HvwSkri.png" alt="map preview" />
+    </div>
+    <div class="ban-panel">
+      <div>BANS</div>
+      <div id="banRight" class="ban-thumbs"></div>
+    </div>
+  </div>
+
+  <div class="series-row" id="seriesRow"></div>
+  <div class="map-grid" id="mapGrid"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const mapPools = {
+        Hardpoint: [
+          { name: "Summit", url: "https://i.imgur.com/XMmudAS.png" },
+          { name: "Apocalypse", url: "https://i.imgur.com/0zGGSqM.png" },
+          { name: "Hacienda", url: "https://i.imgur.com/u4ppFlW.png" },
+          { name: "Slums", url: "https://i.imgur.com/U4aFFoi.png" },
+          { name: "Combine", url: "https://i.imgur.com/zv4Ffz2.png" }
+        ],
+        "Search and Destroy": [
+          { name: "Tunisia", url: "https://i.imgur.com/bDsFBor.png" },
+          { name: "Firing Range", url: "https://i.imgur.com/NCxsY60.png" },
+          { name: "Kurohana Metropolis", url: "https://i.imgur.com/gichuj1.png" },
+          { name: "Standoff", url: "https://i.imgur.com/tT7ulSk.png" },
+          { name: "Coastal", url: "https://i.imgur.com/JStaBHR.png" }
+        ],
+        Control: [
+          { name: "Raid", url: "https://i.imgur.com/URdHUyt.png" },
+          { name: "Take Off", url: "https://i.imgur.com/krTgidC.png" },
+          { name: "Crossfire", url: "https://i.imgur.com/TjMmMNJ.png" }
+        ]
+      };
+
+      const vetoFlows = {
+        bo3: [
+          { type: "ban", team: "T1", mode: "Hardpoint" },
+          { type: "ban", team: "T2", mode: "Hardpoint" },
+          { type: "ban", team: "T1", mode: "Hardpoint" },
+          { type: "ban", team: "T2", mode: "Hardpoint" },
+          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T1" },
+          { type: "ban", team: "T2", mode: "Search and Destroy" },
+          { type: "ban", team: "T1", mode: "Search and Destroy" },
+          { type: "ban", team: "T2", mode: "Search and Destroy" },
+          { type: "ban", team: "T1", mode: "Search and Destroy" },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T2" },
+          { type: "ban", team: "T1", mode: "Control" },
+          { type: "ban", team: "T2", mode: "Control" },
+          { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" }
+        ],
+        bo5: [
+          { type: "ban", team: "T1", mode: "Hardpoint" },
+          { type: "ban", team: "T2", mode: "Hardpoint" },
+          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
+          { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
+          { type: "ban", team: "T2", mode: "Search and Destroy" },
+          { type: "ban", team: "T1", mode: "Search and Destroy" },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
+          { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4, sidePicker: "T2" },
+          { type: "ban", team: "T1", mode: "Control" },
+          { type: "ban", team: "T2", mode: "Control" },
+          { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" }
+        ],
+        bo7: [
+          { type: "ban", team: "T1", mode: "Hardpoint" },
+          { type: "ban", team: "T2", mode: "Hardpoint" },
+          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
+          { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
+          { type: "ban", team: "T2", mode: "Search and Destroy" },
+          { type: "ban", team: "T1", mode: "Search and Destroy" },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
+          { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 4, sidePicker: "T2" },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 6, sidePicker: "T2" },
+          { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T2" },
+          { type: "pick", team: "T2", mode: "Control", mapIndex: 5, sidePicker: "T1" }
+        ],
+        gfbo7: [
+          { type: "ban", team: "T1", mode: "Hardpoint" },
+          { type: "ban", team: "T2", mode: "Hardpoint" },
+          { type: "pick", team: "T1", mode: "Hardpoint", mapIndex: 0, sidePicker: "T2" },
+          { type: "pick", team: "T2", mode: "Hardpoint", mapIndex: 3, sidePicker: "T1" },
+          { type: "ban", team: "T2", mode: "Search and Destroy" },
+          { type: "ban", team: "T1", mode: "Search and Destroy" },
+          { type: "pick", team: "T2", mode: "Search and Destroy", mapIndex: 1, sidePicker: "T1" },
+          { type: "pick", team: "T1", mode: "Search and Destroy", mapIndex: 6, sidePicker: "T2" },
+          { type: "pick", team: "T1", mode: "Control", mapIndex: 2, sidePicker: "T1" },
+          { type: "pick", team: "T2", mode: "Control", mapIndex: 5, sidePicker: "T1" }
+        ]
+      };
+
+      let usedMaps = [];
+      let currentStepIndex = 0;
+      let currentFlow = vetoFlows.bo5;
+      const history = [];
+      let redoStack = [];
+
+      document.getElementById("formatSelect").addEventListener("change", () => {
+        currentStepIndex = 0;
+        usedMaps = [];
+        currentFlow = vetoFlows[document.getElementById("formatSelect").value];
+        document.getElementById("banLeft").innerHTML = "";
+        document.getElementById("banRight").innerHTML = "";
+        renderSeries();
+        renderMapGrid();
+        updateStepDisplay();
+      });
+
+      function getTeamName(code) {
+        const t1 = document.getElementById("team1Name").value || "Team 1";
+        const t2 = document.getElementById("team2Name").value || "Team 2";
+        return code === "T1" ? t1 : t2;
+      }
+
+      function updateStepDisplay() {
+        const step = currentFlow[currentStepIndex];
+        if (!step) {
+          document.getElementById("stepDisplay").textContent = "✅ Veto complete!";
+          return;
+        }
+        const action = step.type === "ban" ? "Ban" : "Pick";
+        const teamLabel = step.team === "T1" ? "Team 1" : "Team 2";
+        document.getElementById("stepDisplay").textContent = `Step ${currentStepIndex + 1}: ${teamLabel} - ${action} (${step.mode})`;
+      }
+
+      function renderSeries() {
+        const row = document.getElementById("seriesRow");
+        row.innerHTML = "";
+      
+        const picks = currentFlow.filter(s => s.type === "pick");
+        const maxIndex = Math.max(...picks.map(s => s.mapIndex), 0);
+      
+        const team1Name = getTeamName("T1");
+        const team2Name = getTeamName("T2");
+      
+        for (let i = 0; i <= maxIndex; i++) {
+          const pick = picks.find(p => p.mapIndex === i);
+          const mode = pick?.mode || "...";
+          const sideTeam = pick?.sidePicker
+            ? `${pick.sidePicker === "T1" ? team1Name : team2Name} (chooses side)`
+            : "TBD";
+      
+          const div = document.createElement("div");
+          div.className = "series-slot";
+          div.setAttribute("data-index", i);
+          div.innerHTML = `
+            Map ${i + 1}
+            <div class="mode">${mode}</div>
+            <div class="side">Side: ${sideTeam}</div>
+          `;
+          row.appendChild(div);
+        }
+      }
+
+      function renderMapGrid() {
+        const grid = document.getElementById("mapGrid");
+        const step = currentFlow[currentStepIndex];
+        grid.innerHTML = "";
+        if (!step) return;
+
+        mapPools[step.mode].forEach(map => {
+          const isUsed = usedMaps.includes(map.name);
+          const card = document.createElement("div");
+          card.className = "map-card" + (isUsed ? " disabled" : "");
+          card.innerHTML = `<img src="${map.url}"><div>${map.name}</div>`;
+          if (!isUsed) {
+            card.onclick = () => handleMapClick(map, step);
+          }
+          grid.appendChild(card);
+        });
+      }
+
+      function handleMapClick(map, step) {
+        document.getElementById("mainPreview").src = map.url;
+      
+        history.push({
+          stepIndex: currentStepIndex,
+          mapName: map.name,
+          team: step.team,
+          type: step.type,
+          mode: step.mode,
+          mapIndex: step.mapIndex,
+          mapUrl: map.url,
+          sidePicker: step.sidePicker
+        });
+        redoStack = [];
+      
+        usedMaps.push(map.name);
+      
+        if (step.type === "ban") {
+          const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
+          const banItem = document.createElement("div");
+          banItem.className = "ban-item";
+          banItem.innerHTML = `
+            <img src="${map.url}" alt="${map.name}" />
+            <div class="label">${step.mode}<br>${map.name}</div>
+          `;
+          target.appendChild(banItem);
+        } else if (step.type === "pick") {
+          const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          seriesSlot.innerHTML = `
+            <img src="${map.url}" alt="${map.name}" />
+            <div class="map-name">${map.name}</div>
+            <div class="mode">${step.mode}</div>
+          `;
+      
+          // Show side selection buttons
+          const sidePickerTeam = getTeamName(step.sidePicker);
+          const sideDiv = document.createElement("div");
+          sideDiv.className = "side-select";
+          sideDiv.setAttribute("data-index", step.mapIndex);
+          sideDiv.innerHTML = `
+            <div style="margin-top: 6px;">
+              <label style="font-size: 0.8rem;">${sidePickerTeam}, pick side:</label><br/>
+              <button onclick="setSide('${step.mapIndex}', 'Blue')">${sidePickerTeam} as Blue</button>
+              <button onclick="setSide('${step.mapIndex}', 'Red')">${sidePickerTeam} as Red</button>
+            </div>
+          `;
+          seriesSlot.appendChild(sideDiv);
+        }
+      
+        currentStepIndex++;
+        renderMapGrid();
+        updateStepDisplay();
+      }
+
+      function setSide(mapIndex, chosenSide) {
+        const slot = document.querySelector(`.series-slot[data-index="${mapIndex}"]`);
+        const sidePicker = currentFlow.find(s => s.type === "pick" && s.mapIndex == mapIndex)?.sidePicker;
+        const team1 = getTeamName("T1");
+        const team2 = getTeamName("T2");
+    
+        const sideTeam = chosenSide === "Blue"
+          ? (sidePicker === "T1" ? team1 : team2)
+          : (sidePicker === "T1" ? team2 : team1);
+        const otherTeam = chosenSide === "Blue"
+          ? (sidePicker === "T1" ? team2 : team1)
+          : (sidePicker === "T1" ? team1 : team2);
+    
+        const existingImg = slot.querySelector("img")?.outerHTML || "";
+        const mapName = slot.querySelector(".map-name")?.innerText || "";
+        const modeName = slot.querySelector(".mode")?.innerText || "";
+    
+        slot.innerHTML = `
+          ${existingImg}
+          <div class="map-name">${mapName}</div>
+          <div class="mode">${modeName}</div>
+          <div class="side">Blue: ${sideTeam} | Red: ${otherTeam}</div>
+        `;
+    
+        const selector = document.querySelector('.side-select[data-index="' + mapIndex + '"]');
+        if (selector) selector.remove();
+      }
+      
+      function undoVeto() {
+        if (history.length === 0) return;
+        const last = history.pop();
+        redoStack.push(last);
+        usedMaps = usedMaps.filter(name => name !== last.mapName);
+        currentStepIndex = last.stepIndex;
+        renderSeries();
+        renderMapGrid();
+        updateStepDisplay();
+        document.getElementById("banLeft").innerHTML = "";
+        document.getElementById("banRight").innerHTML = "";
+        history.forEach(h => applyStepFromHistory(h));
+      }
+
+      function redoVeto() {
+        if (redoStack.length === 0) return;
+        const next = redoStack.pop();
+        usedMaps.push(next.mapName);
+        history.push(next);
+        currentStepIndex = next.stepIndex + 1;
+        applyStepFromHistory(next);
+        renderMapGrid();
+        updateStepDisplay();
+      }
+
+      function applyStepFromHistory(step) {
+        if (step.type === "ban") {
+          const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
+          const banItem = document.createElement("div");
+          banItem.className = "ban-item";
+          banItem.innerHTML = `
+            <img src="${step.mapUrl}" alt="${step.mapName}" />
+            <div class="label">${step.mode}<br>${step.mapName}</div>
+          `;
+          target.appendChild(banItem);
+        } else if (step.type === "pick") {
+          const teamName = getTeamName(step.team);
+          const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          const side = step.sidePicker === "T1" ? getTeamName("T1") : getTeamName("T2");
+
+          seriesSlot.innerHTML = `
+            <img src="${step.mapUrl}" alt="${step.mapName}" />
+            <div class="map-name">${step.mapName}</div>
+            <div class="mode">${step.mode}</div>
+            <div class="side">Side: ${side} (chosen by ${getTeamName(step.sidePicker)})</div>
+          `;
+        }
+      }
+
+      renderSeries();
+      renderMapGrid();
+      updateStepDisplay();
+    });
+  </script>
+</body>
+</html>

@@ -181,51 +181,6 @@
       gap: 10px;
       padding: 20px 10px;
     }
-    .side-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      color: white;
-    }
-    
-    .side-prompt {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    
-    .side-options {
-      display: flex;
-      gap: 50px;
-    }
-    
-    .side-box {
-      background: #1a1a1a;
-      padding: 30px;
-      border: 2px solid #666;
-      border-radius: 8px;
-      cursor: pointer;
-      text-align: center;
-      width: 200px;
-      transition: all 0.3s ease;
-    }
-    
-    .side-box:hover {
-      border-color: #00bfff;
-    }
-    
-    .team-placeholder {
-      margin-top: 15px;
-      font-size: 1.1rem;
-      color: #ffd700;
-    }
-
   </style>
 </head>
 <body>
@@ -275,20 +230,6 @@
 
   <div class="series-row" id="seriesRow"></div>
   <div class="map-grid" id="mapGrid"></div>
-
-  <div id="sideSelectOverlay" class="side-overlay">
-    <div class="side-prompt" id="sidePrompt">Who takes which side?</div>
-    <div class="side-options">
-      <div class="side-box" onclick="chooseSide('Blue')">
-        <div class="side-title">Blue Side</div>
-        <div class="team-placeholder" id="blueSideBox">Click to assign</div>
-      </div>
-      <div class="side-box" onclick="chooseSide('Red')">
-        <div class="side-title">Red Side</div>
-        <div class="team-placeholder" id="redSideBox">Click to assign</div>
-      </div>
-    </div>
-  </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -451,39 +392,56 @@
         });
       }
 
-      let pendingStep = null;
-      
       function handleMapClick(map, step) {
-        if (step.type === "pick") {
-          pendingStep = { ...step, mapUrl: map.url, mapName: map.name };
-          document.getElementById("sideSelectOverlay").style.display = "flex";
-          document.getElementById("sidePrompt").textContent = `${getTeamName(step.sidePicker)} chooses side for ${map.name}`;
-        } else {
-          // regular ban logic
-        }
-      }
+        document.getElementById("mainPreview").src = map.url;
       
-      function chooseSide(selectedSide) {
-        const otherSide = selectedSide === "Blue" ? "Red" : "Blue";
-        const pickerTeam = getTeamName(pendingStep.sidePicker);
-        const otherTeam = getTeamName(pendingStep.sidePicker === "T1" ? "T2" : "T1");
-      
-        const blueTeam = selectedSide === "Blue" ? pickerTeam : otherTeam;
-        const redTeam = selectedSide === "Red" ? pickerTeam : otherTeam;
-      
-        const slot = document.querySelector(`.series-slot[data-index="${pendingStep.mapIndex}"]`);
-        slot.innerHTML = `
-          <img src="${pendingStep.mapUrl}" alt="${pendingStep.mapName}" />
-          <div class="map-name">${pendingStep.mapName}</div>
-          <div class="mode">${pendingStep.mode}</div>
-          <div class="side">${blueTeam} (Blue) vs ${redTeam} (Red)</div>
-        `;
-      
-        history.push({ ...pendingStep, side: selectedSide, blueTeam, redTeam });
+        history.push({
+          stepIndex: currentStepIndex,
+          mapName: map.name,
+          team: step.team,
+          type: step.type,
+          mode: step.mode,
+          mapIndex: step.mapIndex,
+          mapUrl: map.url,
+          sidePicker: step.sidePicker
+        });
         redoStack = [];
+      
+        usedMaps.push(map.name);
+      
+        if (step.type === "ban") {
+          const target = step.team === "T1" ? document.getElementById("banLeft") : document.getElementById("banRight");
+          const banItem = document.createElement("div");
+          banItem.className = "ban-item";
+          banItem.innerHTML = `
+            <img src="${map.url}" alt="${map.name}" />
+            <div class="label">${step.mode}<br>${map.name}</div>
+          `;
+          target.appendChild(banItem);
+        } else if (step.type === "pick") {
+          const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          seriesSlot.innerHTML = `
+            <img src="${map.url}" alt="${map.name}" />
+            <div class="map-name">${map.name}</div>
+            <div class="mode">${step.mode}</div>
+          `;
+      
+          // Show side selection buttons
+          const sidePickerTeam = getTeamName(step.sidePicker);
+          const sideDiv = document.createElement("div");
+          sideDiv.className = "side-select";
+          sideDiv.setAttribute("data-index", step.mapIndex);
+          sideDiv.innerHTML = `
+            <div style="margin-top: 6px;">
+              <label style="font-size: 0.8rem;">${sidePickerTeam}, pick side:</label><br/>
+              <button onclick="setSide('${step.mapIndex}', 'Blue')">${sidePickerTeam} as Blue</button>
+              <button onclick="setSide('${step.mapIndex}', 'Red')">${sidePickerTeam} as Red</button>
+            </div>
+          `;
+          seriesSlot.appendChild(sideDiv);
+        }
+      
         currentStepIndex++;
-        pendingStep = null;
-        document.getElementById("sideSelectOverlay").style.display = "none";
         renderMapGrid();
         updateStepDisplay();
       }

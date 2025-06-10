@@ -429,14 +429,16 @@
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
           const teamPicked = getTeamName(step.team);
 
+          const pickingTeam = getTeamName(step.team);
+          const sidePickingTeam = step.team === "T1" ? getTeamName("T2") : getTeamName("T1");
           seriesSlot.innerHTML = `
             <img src="${map.url}" alt="${map.name}" />
             <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
-            <div class="picked-by">Picked by ${teamPicked}</div>
+            <div class="picked-by">Picked by ${pickingTeam}</div>
             <div class="side-select" data-index="${step.mapIndex}" style="margin-top: 5px;">
-              <label style="font-size: 0.75rem;">${teamPicked}, choose side:</label>
-              <select onchange="handleSideSelect('${step.mapIndex}', this.value)">
+              <label style="font-size: 0.75rem;">${sidePickingTeam}, choose side:</label>
+              <select onchange="handleSideSelect('${step.mapIndex}', '${step.team}', this.value)">
                 <option value="" disabled selected>Select side</option>
                 <option value="Blue">Blue</option>
                 <option value="Red">Red</option>
@@ -450,17 +452,14 @@
         updateStepDisplay();
       }
 
-      function handleSideSelect(mapIndex, chosenSide) {
+      function handleSideSelect(mapIndex, pickingTeamCode, chosenSide) {
         const slot = document.querySelector(`.series-slot[data-index="${mapIndex}"]`);
-        const step = currentFlow.find(s => s.type === "pick" && s.mapIndex == mapIndex);
-        if (!step) return;
-      
-        const teamPicked = getTeamName(step.team);
-        const otherTeam = step.team === "T1" ? getTeamName("T2") : getTeamName("T1");
+        const pickingTeam = getTeamName(pickingTeamCode);
+        const sidePickingTeam = pickingTeamCode === "T1" ? getTeamName("T2") : getTeamName("T1");
       
         const sideAssignment = chosenSide === "Blue"
-          ? `Blue: ${teamPicked} | Red: ${otherTeam}`
-          : `Red: ${teamPicked} | Blue: ${otherTeam}`;
+          ? `Blue: ${sidePickingTeam} | Red: ${pickingTeam}`
+          : `Red: ${sidePickingTeam} | Blue: ${pickingTeam}`;
       
         const img = slot.querySelector("img")?.outerHTML || "";
         const mapName = slot.querySelector(".map-name")?.innerText || "";

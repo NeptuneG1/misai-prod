@@ -173,6 +173,11 @@
       border-radius: 10px;
       border: 3px solid #444;
     }
+    .series-slot .picked-by {
+      font-size: 0.75rem;
+      color: #00bfff;
+      margin-top: 3px;
+    }
     #seriesRow {
       display: flex;
       flex-wrap: wrap;
@@ -409,10 +414,13 @@
           target.appendChild(banItem);
         } else if (step.type === "pick") {
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
+          const teamPicked = getTeamName(step.team);
+
           seriesSlot.innerHTML = `
             <img src="${map.url}" alt="${map.name}" />
             <div class="map-name">${map.name}</div>
             <div class="mode">${step.mode}</div>
+            <div class="picked-by">Picked by ${teamPicked}</div>
           `;
         }
 

@@ -459,6 +459,13 @@
     
         const selector = document.querySelector('.side-select[data-index="' + mapIndex + '"]');
         if (selector) selector.remove();
+
+        // Update the stored step in history with side assignment
+        const index = history.findIndex(s => s.mapIndex == mapIndex && s.type === "pick");
+        if (index !== -1) {
+          history[index].blueTeam = sideTeam;
+          history[index].redTeam = otherTeam;
+        }
       }
       
       function undoVeto() {
@@ -501,11 +508,14 @@
           const seriesSlot = document.querySelector(`.series-slot[data-index="${step.mapIndex}"]`);
           const side = step.sidePicker === "T1" ? getTeamName("T1") : getTeamName("T2");
 
+          const blue = step.blueTeam || "Blue";
+          const red = step.redTeam || "Red";
+          
           seriesSlot.innerHTML = `
             <img src="${step.mapUrl}" alt="${step.mapName}" />
             <div class="map-name">${step.mapName}</div>
             <div class="mode">${step.mode}</div>
-            <div class="side">Side: ${side} (chosen by ${getTeamName(step.sidePicker)})</div>
+            <div class="side">Blue: ${blue} | Red: ${red}</div>
           `;
         }
       }
